@@ -3,8 +3,8 @@
  * @version:
  * @Author: zhouhao
  * @Date: 2023-09-18 15:57:33
- * @LastEditors: zhouhao
- * @LastEditTime: 2025-08-25 10:11:56
+ * @LastEditors: ubuntu
+ * @LastEditTime: 2025-12-04 15:45:50
  */
 #include <stdio.h>
 #include <string.h>
@@ -223,9 +223,8 @@ static void ql_key_tts_next()
     }
     else
     {
-	    char *sim_check = "当前没有未读信息";
 	    //ltplay_check_play(SND_SMS);
-	    ltapi_play_tts(sim_check, strlen(sim_check));
+	    ltapi_play_tts(TTS_STR_SMS_NONE_UNREAD, strlen(TTS_STR_SMS_NONE_UNREAD));
         QL_SMS_LOG("sms have no  imessage!!");
     }
 }
@@ -324,11 +323,10 @@ static void ql_key_tts_click()
     }
     else
     {
-	    char *sim_check = "当前没有未读信息";
 	    //ltplay_check_play(SND_SMS);
         if(ltplay_get_src() == SND_STOP)
         {
-	        ltapi_play_tts(sim_check, strlen(sim_check));
+	        ltapi_play_tts(TTS_STR_SMS_NONE_UNREAD, strlen(TTS_STR_SMS_NONE_UNREAD));
         }
         QL_SMS_LOG("sms have no  imessage!!");
     }
@@ -407,7 +405,6 @@ void lt_tts_new_info()
 {
     QL_SMS_LOG("lt_tts_new_info");
     #if PACK_TYPE != PACK_NANJING
-	char *sim_check = "您有新的消息，请注意查收";
 	ql_rtc_time_t tm;
 	ql_rtc_get_localtime(&tm);
 	// 获取当前时间
@@ -422,7 +419,7 @@ void lt_tts_new_info()
         {
             ql_rtos_task_sleep_s(2);
         }
-        ltapi_play_tts(sim_check, strlen(sim_check));
+        ltapi_play_tts(TTS_STR_SMS_NEW_MSG, strlen(TTS_STR_SMS_NEW_MSG));
     }
 
 #endif

@@ -1,8 +1,8 @@
 /*
  * @Author: zhaixianwen
  * @Date: 2023-09-07 10:21:26
- * @LastEditTime: 2024-06-24 16:16:43
- * @LastEditors: zhouhao
+ * @LastEditTime: 2025-12-04 15:31:08
+ * @LastEditors: ubuntu
  * @Description: 短信处理模块
  * @FilePath: /LTE01R02A01_BETA0726_C_SDK_G/components/ql-application/ltmain/src/ltsms/ltsms.c
  */
@@ -95,8 +95,7 @@ void instruct_play_handle(void *buf,int date_len)
 void lt_simCheck_reboot()
 {
 	QL_SMS_LOG("lt_simCheck_reboot");
-	char *sim_check = "检测到电话卡插入,系统将在5秒后重启";
-	ltapi_play_tts(sim_check, strlen(sim_check));
+	ltapi_play_tts(TTS_STR_SIM_INS_REBOOT, strlen(TTS_STR_SIM_INS_REBOOT));
 	ql_rtos_task_sleep_s(10);
 	ql_power_reset(RESET_NORMAL);
 }

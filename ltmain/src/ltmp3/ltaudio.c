@@ -99,9 +99,8 @@ static void ql_key_mp3_play()
         return ;
     if(ltmp3_get_audio_cnt() == 0 )
     {
-        char *MP3List_check = "当前没有获取音乐列表";
 	    //ltplay_check_play(SND_SMS);
-	    ltapi_play_tts(MP3List_check, strlen(MP3List_check));
+	    ltapi_play_tts(TTS_STR_MP3_NO_LIST, strlen(TTS_STR_MP3_NO_LIST));
         LT_AUDIO_LOG("MP3 have no  imessage!!");
         return;
     }
@@ -126,45 +125,7 @@ static void ql_key_mp3_play()
         
     }
 }
-// static void ql_key_mp3_click()
-// {
-//     if (ltplay_get_src() == SND_TEL || ltplay_get_src() == SND_EBS || ltplay_get_src() == SND_SMS)
-//         return ;
 
-//     if(ltplay_get_src() == SND_MP3)
-//     {
-//       ql_key_mp3_stop();
-//       return;  
-//     }
-//     if(ltmp3_get_audio_cnt() == 0 )
-//     {
-//         char *MP3List_check = "当前没有获取音乐列表";
-// 	    //ltplay_check_play(SND_SMS);
-// 	    ltapi_play_tts(MP3List_check, strlen(MP3List_check));
-//         LT_AUDIO_LOG("MP3 have no  imessage!!");
-//         return;
-//     }
-       
-//     if(ltplay_get_src() != SND_MP3 && LTAPCU_STA_STOP == ltmp3_get_audio_sta() )
-//     {
-//         set_function_state(MP3, ltmp3_get_cur_audio_index()+1);//提前显示MP3的面板
-//         ltplay_check_play(SND_MP3);
-//         ql_aud_player_stop();
-//         ltmp3_set_audio_sta(LTAPCU_STA_PLAY);
-//     }else{
-//         if(LTAPCU_STA_PLAY == ltmp3_get_audio_sta())
-//         {
-//             ltmp3_set_audio_sta(LTAPCU_STA_PAUSE);
-//             set_function_state(PAUS, 0);//paus
-//             ltapi_pause_mp3();
-//         }else if(LTAPCU_STA_PAUSE == ltmp3_get_audio_sta()){
-//             ltmp3_set_audio_sta(LTAPCU_STA_PLAY);
-//             set_function_state(MP3, ltmp3_get_cur_audio_index()+1);
-//             ltapi_resume_mp3();
-//         }
-        
-//     }
-// }
 
 uint8_t play_flag = 0;
 static void ql_key_mp3_next()
@@ -181,9 +142,8 @@ static void ql_key_mp3_next()
         if (ltmp3_get_audio_cnt() == 0)
         {
             lt_audio_pa_disable();
-            char *MP3List_check = "当前没有音乐列表";
             // ltplay_check_play(SND_SMS);
-            ltapi_play_tts(MP3List_check, strlen(MP3List_check));
+            ltapi_play_tts(TTS_STR_MP3_NO_LIST, strlen(TTS_STR_MP3_NO_LIST));
             LT_AUDIO_LOG("MP3 have no  imessage!!");
             return;
         }
@@ -203,9 +163,8 @@ static void ql_key_mp3_last()
         return;
     if(ltmp3_get_audio_cnt() == 0 )
     {
-        char *MP3List_check = "当前没有音乐列表";
 	    //ltplay_check_play(SND_SMS);
-	    ltapi_play_tts(MP3List_check, strlen(MP3List_check));
+	    ltapi_play_tts(TTS_STR_MP3_NO_LIST, strlen(TTS_STR_MP3_NO_LIST));
         LT_AUDIO_LOG("MP3 have no  imessage!!");
         return;
     }           

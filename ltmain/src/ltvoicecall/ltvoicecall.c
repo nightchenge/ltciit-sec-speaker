@@ -2,7 +2,7 @@
  * @Author: zhaixianwen
  * @Date: 2023-09-07 10:21:26
 
- * @LastEditTime: 2025-12-03 09:33:41
+ * @LastEditTime: 2025-12-04 15:44:03
  * @LastEditors: ubuntu
  * @Description: 电话处理模块
  * @FilePath: /LTE01R02A01_BETA0726_C_SDK_G/components/ql-application/ltmain/src/ltsms/ltsms.c
@@ -525,8 +525,7 @@ static void family_key_record_stop_cb()
 
 static void family_key_record_cb()
 {
-	char *buf_call_f = "请说出您的语音指令查询请求";
-	ltapi_play_tts(buf_call_f, strlen(buf_call_f));
+	ltapi_play_tts(TTS_STR_VCMD_QUERY, strlen(TTS_STR_VCMD_QUERY));
 	ql_rtos_task_sleep_s(5);			/* 延时等tts播放完成 */
 	lt_record_data_handle();			/* 录音处理并上报 */
 	return;
@@ -536,8 +535,7 @@ static void family_announce_current(void)
 {
     if (g_family_list.family_count == 0)
     {
-        char *no_conf = "未配置亲情号码";
-        ltapi_play_tts(no_conf, strlen(no_conf));
+        ltapi_play_tts(TTS_STR_NO_FAMILY_NUM, strlen(TTS_STR_NO_FAMILY_NUM));
         return;
     }
     /* 播报格式：当前亲情号码是 XXX */
@@ -563,8 +561,7 @@ void family_key_longclick_cb()
 	g_family_list_init();
 	if (g_family_list.family_count == 0)
 	{
-		char *no_conf = "未配置亲情号码";
-		ltapi_play_tts(no_conf, strlen(no_conf));
+		ltapi_play_tts(TTS_STR_NO_FAMILY_NUM, strlen(TTS_STR_NO_FAMILY_NUM));
 		return;
 	}
 	family_announce_current();
@@ -575,8 +572,7 @@ void family_key_double_cb()
 	g_family_list_init();
 	if (g_family_list.family_count == 0)
 	{
-		char *no_conf = "未配置亲情号码";
-		ltapi_play_tts(no_conf, strlen(no_conf));
+		ltapi_play_tts(TTS_STR_NO_FAMILY_NUM, strlen(TTS_STR_NO_FAMILY_NUM));
 		return;
 	}
 	// fm_info_t *this = &ltfm_info;
@@ -621,14 +617,12 @@ static void family_key_click_cb_new()
 
     if (card_status == QL_SIM_STATUS_NOSIM)
     {
-        char *buf = "未插入SIM卡.";
-        ltapi_play_tts(buf, strlen(buf));
+        ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
         return;
     }
     if (1 != lt_connect_status_get())
     {
-        char *buf = "当前网络未连接,不可用";
-        ltapi_play_tts(buf, strlen(buf));
+        ltapi_play_tts(TTS_STR_NET_UNAVAILABLE, strlen(TTS_STR_NET_UNAVAILABLE));
         return;
     }
 	g_family_list_init();
@@ -637,8 +631,7 @@ static void family_key_click_cb_new()
     {
         if (g_family_list.family_count == 0)
         {
-            char *no_conf = "未配置亲情号码";
-            ltapi_play_tts(no_conf, strlen(no_conf));
+            ltapi_play_tts(TTS_STR_NO_FAMILY_NUM, strlen(TTS_STR_NO_FAMILY_NUM));
             return;
         }
 
@@ -724,14 +717,13 @@ static void family_key_click_cb()
 
 	if (card_status == QL_SIM_STATUS_NOSIM)
 	{
-		char *buf = "未插入SIM卡.";
-		ltapi_play_tts(buf, strlen(buf));
+		ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
 		return;
 	}
 	if (1 != lt_connect_status_get())
 	{
-		char *buf = "当前网络未连接,不可用";
-		ltapi_play_tts(buf, strlen(buf));
+
+		ltapi_play_tts(TTS_STR_NET_UNAVAILABLE, strlen(TTS_STR_NET_UNAVAILABLE));
 		return;
 	}
 	voice_call_status_t st = lt_voice_call_status_get();
@@ -743,8 +735,7 @@ static void family_key_click_cb()
 		{
 			lt_voice_call_status_set(STATUS_CALL_FAMILY);
 			ql_rtos_task_sleep_s(1); 
-			char *buf_call_f = "正在呼出家庭电话，请稍候";
-			ltapi_play_tts(buf_call_f, strlen(buf_call_f));
+			ltapi_play_tts(TTS_STR_CALLING_FAMILY, strlen(TTS_STR_CALLING_FAMILY));
 			ql_rtos_task_sleep_s(5); 
 			LT_VOICE_CALL_LOG("familyPhone number:%s", familyPhone);
 			if (ql_voice_call_start(ltvoicecall.nSim, familyPhone) != QL_VC_SUCCESS)
@@ -756,8 +747,7 @@ static void family_key_click_cb()
 		}
 		else
 		{
-			char *family_check = "未配置号码";
-			ltapi_play_tts(family_check, strlen(family_check));
+			ltapi_play_tts(TTS_STR_NO_FAMILY_NUM, strlen(TTS_STR_NO_FAMILY_NUM));
 		}
 	}else if(st ==STATUS_CALLED)
 	{
@@ -835,18 +825,15 @@ static void lt_voice_call_start(char *buf_call, phone_type_t type)
     {
         if (WATER_SERVICE_TYPE == type)
         {
-            char *family_check = "未配置水务号码";
-            ltapi_play_tts(family_check, strlen(family_check));
+            ltapi_play_tts(TTS_STR_NO_WATER_NUM, strlen(TTS_STR_NO_WATER_NUM));
         }
         else if (ELECTRIC_SERVICE_TYPE == type)
         {
-            char *family_check = "未配置电力服务号码";
-            ltapi_play_tts(family_check, strlen(family_check));
+			ltapi_play_tts(TTS_STR_NO_ELEC_NUM, strlen(TTS_STR_NO_ELEC_NUM));
         }
         else
         {
-            char *family_check = "未配置燃气服务号码";
-            ltapi_play_tts(family_check, strlen(family_check));
+			ltapi_play_tts(TTS_STR_NO_GAS_NUM, strlen(TTS_STR_NO_GAS_NUM));
         }
     }
     return;
@@ -897,8 +884,7 @@ static void water_key_click_cb()
 
     if (QL_SIM_STATUS_NOSIM == card_status)
     {
-        char *buf = "未插入SIM卡.";
-        ltapi_play_tts(buf, strlen(buf));
+        ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
         return;
     }
 
@@ -906,8 +892,7 @@ static void water_key_click_cb()
     LT_VOICE_CALL_LOG("voice call state:%d", st);
     if (STATUS_NONE == st)
     {
-        char *buf_call_f = "正在拨打水务电话，请稍候";
-        lt_voice_call_start(buf_call_f, WATER_SERVICE_TYPE);
+        lt_voice_call_start(TTS_STR_CALLING_WATER, WATER_SERVICE_TYPE);
     }
     else if (STATUS_CALLED == st)
     {
@@ -924,8 +909,7 @@ static void water_key_click_cb()
         LT_VOICE_CALL_LOG("state:%d", st);
         if ((st != STATUS_CALL_WATER_SERVICE) && (st != STATUS_CALL_WATER_CONNECT))
         {
-            char *buf_call_f = "正在拨打水务电话，请稍候";
-            lt_voice_call_start(buf_call_f, WATER_SERVICE_TYPE);
+            lt_voice_call_start(TTS_STR_CALLING_WATER, WATER_SERVICE_TYPE);
         }
     }
 }
@@ -937,8 +921,7 @@ static void gas_key_click_cb()
 
     if (QL_SIM_STATUS_NOSIM == card_status)
     {
-        char *buf = "未插入SIM卡.";
-        ltapi_play_tts(buf, strlen(buf));
+        ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
         return;
     }
 
@@ -977,8 +960,7 @@ static void electric_key_click_cb()
 
     if (QL_SIM_STATUS_NOSIM == card_status)
     {
-        char *buf = "未插入SIM卡.";
-        ltapi_play_tts(buf, strlen(buf));
+		ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
         return;
     }
 
@@ -1018,14 +1000,12 @@ void sosPhone_key_click_cb()
 
 	if (card_status == QL_SIM_STATUS_NOSIM)
 	{
-		char *buf = "未插入SIM卡.";
-		ltapi_play_tts(buf, strlen(buf));
+		ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
 		return;
 	}
 	if (1 != lt_connect_status_get())
 	{
-		char *buf = "当前网络未连接,不可用";
-		ltapi_play_tts(buf, strlen(buf));
+		ltapi_play_tts(TTS_STR_NET_UNAVAILABLE, strlen(TTS_STR_NET_UNAVAILABLE));
 		return;
 	}
 	voice_call_status_t st = lt_voice_call_status_get();
@@ -1042,8 +1022,7 @@ void sosPhone_key_click_cb()
 		{
 			lt_voice_call_status_set(STATUS_CALL_SOS);
 			ql_rtos_task_sleep_s(1);
-			char *buf_call_f = "正在拨打一键通号码，请稍候";
-			ltapi_play_tts(buf_call_f, strlen(buf_call_f));
+			ltapi_play_tts(TTS_STR_CALLING_SOS, strlen(TTS_STR_CALLING_SOS));
 			ql_rtos_task_sleep_s(5); //
 
 			LT_VOICE_CALL_LOG("sosPhone begin number:%s", sosPhone);
@@ -1066,8 +1045,7 @@ void sosPhone_key_click_cb()
 		}
 		else
 		{
-			char *sos_check = "未设置一键通号码";
-			ltapi_play_tts(sos_check, strlen(sos_check));
+			ltapi_play_tts(TTS_STR_NO_SOS_NUM, strlen(TTS_STR_NO_SOS_NUM));
 			QL_SMS_LOG("sos have no  number!!");
 		}
 	}
@@ -1099,8 +1077,7 @@ static void sosPhone_list_cb()
 
 	if (card_status == QL_SIM_STATUS_NOSIM)
 	{
-		char *buf = "未插入SIM卡.";
-		ltapi_play_tts(buf, strlen(buf));
+		ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
 		return;
 	}
 //	voice_call_status_t st = lt_voice_call_status_get();
@@ -1110,8 +1087,7 @@ static void sosPhone_list_cb()
 		char sosPhone[15] = {0};
 		if (mqtt_param_sosPhonelist_get(sosPhone, sizeof(sosPhone),ltvoicecall.sos_index) == 0)
 		{
-			char *sos_list_check = "拨打下一个一键通号码";
-			ltapi_play_tts(sos_list_check, strlen(sos_list_check));
+			ltapi_play_tts(TTS_STR_SOS_NEXT, strlen(TTS_STR_SOS_NEXT));
 			ql_rtos_task_sleep_s(5);
 			LT_VOICE_CALL_LOG("sosPhone begin number:%s", sosPhone);
     
@@ -1128,8 +1104,7 @@ static void sosPhone_list_cb()
 		}
 		else
 		{
-			char *sos_check = "一键通号码轮询结束";
-	    	ltapi_play_tts(sos_check, strlen(sos_check));                                        
+			ltapi_play_tts(TTS_STR_SOS_END, strlen(TTS_STR_SOS_END));                                        
         	QL_SMS_LOG("sos have no  number!!");
 			
 			ql_rtos_task_sleep_s(5);   
@@ -1273,9 +1248,7 @@ static void ql_repeat_shutdown(void *data)
 	LT_VOICE_CALL_LOG("tts_turnoff");
 	if (1 == ql_tts_ckeck_reboot())
 	{
-		char *sim_check = "您有未读短信,请尽快读取,仍需关机,请保持长按";
-		// ltplay_check_play(SND_SMS);
-		ltapi_play_tts(sim_check, strlen(sim_check));
+		ltapi_play_tts(TTS_STR_SMS_SHUTDOWN_WARN, strlen(TTS_STR_SMS_SHUTDOWN_WARN));
 	}
 	else
 	{

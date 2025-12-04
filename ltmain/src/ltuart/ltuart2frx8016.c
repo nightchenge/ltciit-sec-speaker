@@ -138,8 +138,7 @@ void  lt_uart_reboot_now(int type)
 
 void lt_shutdown()
 {
-    char *sim_check = "设备即将关闭";
-    ltapi_play_tts_withcallback(sim_check, strlen(sim_check),QL_TTS_UTF8,NULL,lt_uart_reboot_now);
+    ltapi_play_tts_withcallback(TTS_STR_SYS_SHUTDOWN_SOON, strlen(TTS_STR_SYS_SHUTDOWN_SOON),QL_TTS_UTF8,NULL,lt_uart_reboot_now);
 }
 
 
@@ -324,8 +323,7 @@ void l_reboot_dispose(cJSON *json)
     {
         if (json->valueint == 1)
         {          
-            char *data = "设备将在5秒后重新启动.";
-            ltapi_play_tts(data, strlen(data));
+            ltapi_play_tts(TTS_STR_SYS_REBOOT_5S, strlen(TTS_STR_SYS_REBOOT_5S));
             ql_rtos_task_sleep_s(5);
             ql_power_reset(RESET_NORMAL);
             return;
@@ -340,13 +338,12 @@ void l_reset_dispose(cJSON *json)
     {
         if (json->valueint == 1)
         {
-            char *data = "设备重置成功,将在5秒后自动重启.";
             char json[32] = "{\"state\": 0}";
             lt_uart2frx8016_send(json, strlen(json));
             mqtt_param_reset();
             factory_param_reset();
             ebs_param_reset();
-            ltapi_play_tts(data, strlen(data));
+            ltapi_play_tts(TTS_STR_SYS_RESET_REBOOT, strlen(TTS_STR_SYS_RESET_REBOOT));
             ql_rtos_task_sleep_s(5);
             ql_power_reset(RESET_NORMAL);
             return;
@@ -734,8 +731,7 @@ void asr_system_handle(uint8_t data)
 {
     if(data==0x02)
     {
-        char *buf="设备将在5秒后重新启动.";
-        ltapi_play_tts(buf, strlen(buf));
+        ltapi_play_tts(TTS_STR_SYS_REBOOT_5S, strlen(TTS_STR_SYS_REBOOT_5S));
         ql_rtos_task_sleep_s(5);
         ql_power_reset(RESET_NORMAL);
 
@@ -848,8 +844,7 @@ static void asr_state_singal(void)
 
     if (card_status == QL_SIM_STATUS_NOSIM)
     {
-        char *buf="未插入SIM卡.";
-        ltapi_play_tts(buf, strlen(buf));
+        ltapi_play_tts(TTS_STR_NO_SIM_CARD, strlen(TTS_STR_NO_SIM_CARD));
     }
     else
     {
@@ -858,23 +853,19 @@ static void asr_state_singal(void)
         {
             if (ca > 20 && ca <= 31)
             {
-                char *buf="当前信号质量优.";
-                ltapi_play_tts(buf, strlen(buf));
+                ltapi_play_tts(TTS_STR_SIG_EXCELLENT, strlen(TTS_STR_SIG_EXCELLENT));
             }
             else if (ca <= 20 && ca > 10)
             {
-                char *buf="当前信号质量一般.";
-                ltapi_play_tts(buf, strlen(buf));
+                ltapi_play_tts(TTS_STR_SIG_GOOD, strlen(TTS_STR_SIG_GOOD));
             }
             else if (ca <= 10 && ca >= 1)
             {
-                char *buf="当前信号质量差.";
-                ltapi_play_tts(buf, strlen(buf));
+                ltapi_play_tts(TTS_STR_SIG_POOR, strlen(TTS_STR_SIG_POOR));
             }
             else
             {
-                char *buf="当前信号未连接.";
-                ltapi_play_tts(buf, strlen(buf));
+                ltapi_play_tts(TTS_STR_SIG_NONE, strlen(TTS_STR_SIG_NONE));
             }
         }
     }
@@ -894,8 +885,7 @@ void asr_state_handle(uint8_t data)
         //ltapi_play_tts(buf, strlen(buf));
         if (1 != lt_connect_status_get())
         {
-            char *buf = "当前网络未连接,不可用";
-            ltapi_play_tts(buf, strlen(buf));
+            ltapi_play_tts(TTS_STR_NET_UNAVAILABLE, strlen(TTS_STR_NET_UNAVAILABLE));
             //  return;
         }
         else

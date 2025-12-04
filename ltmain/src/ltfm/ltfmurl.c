@@ -4,7 +4,7 @@
  * @Author: zhouhao
  * @Date: 2024-05-28 10:03:31
  * @LastEditors: ubuntu
- * @LastEditTime: 2025-11-20 15:31:51
+ * @LastEditTime: 2025-12-04 15:23:59
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -245,8 +245,7 @@ static void ql_key_fmurl_next()
     }
     else
     {
-        char *fm_mode = "网络FM 模式没有列表";
-        ltapi_play_tts(fm_mode, strlen(fm_mode));
+        ltapi_play_tts(TTS_STR_MODE_FM_NO_LIST, strlen(TTS_STR_MODE_FM_NO_LIST));
         ql_key_fmurl_stop();
     }
 }
@@ -347,10 +346,9 @@ static void ql_key_fm_changemod(void *data)
         //     this->current_stop();
         this->fm_mode = FM_MODE_8035;
        // ql_rtos_task_sleep_s(2);
-        char *fm_mode = "切换到调频FM 模式";
-        QL_FM_LOG("切换到调频FM 模式");
+        QL_FM_LOG("切换到调频电台模式");
         // ltplay_check_play(SND_SMS);
-        ltapi_play_tts(fm_mode, strlen(fm_mode));
+        ltapi_play_tts(TTS_STR_MODE_SWITCH_FM, strlen(TTS_STR_MODE_SWITCH_FM));
 
         lt_fm_key_callback_register();
         lt_fm_play_callback_register();
@@ -361,10 +359,9 @@ static void ql_key_fm_changemod(void *data)
         // lt_system_msg_handle(LT_SYS_FM_POWER_OFF);
         // lt_fm_power_status_set(FM_POWR_OFF);
          this->fm_mode = FM_MODE_URL;
-        char *fm_mode = "切换到网络FM 模式";
-          QL_FM_LOG("切换到网络FM 模式");
+          QL_FM_LOG("换到网络电台模式");
 	    //ltplay_check_play(SND_SMS);
-	    ltapi_play_tts(fm_mode, strlen(fm_mode));
+	    ltapi_play_tts(TTS_STR_MODE_SWITCH_NET_RADIO, strlen(TTS_STR_MODE_SWITCH_NET_RADIO));
 
         lt_fmurl_key_callback_register();
         lt_fmurl_play_callback_register();

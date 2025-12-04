@@ -145,8 +145,7 @@ void ltplay_thread(void *param)
                 {
                     ltplay_stop();
                     QL_PLAY_LOG("battery low \n");
-                    char *sim_check = " 当前电量低，请及时充电";
-                    ltapi_play_tts(sim_check, strlen(sim_check));
+                    ltapi_play_tts(TTS_STR_BATTERY_LOW, strlen(TTS_STR_BATTERY_LOW));
                 }
             }
         }

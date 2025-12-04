@@ -128,9 +128,8 @@ void ql_key_mp3url_next()
 
     if (0 == this->check_list())
     {
-        char *MP3List_check = "当前没有获取网络音乐列表";
         // ltplay_check_play(SND_SMS);
-        ltapi_play_tts(MP3List_check, strlen(MP3List_check));
+        ltapi_play_tts(TTS_STR_MP3_NET_NO_LIST, strlen(TTS_STR_MP3_NET_NO_LIST));
         LT_AUDIO_LOG("MP3 have no  imessage!!");
         return;
     }
@@ -162,25 +161,6 @@ void ql_key_mp3url_next()
 
 static void ql_key_mp3url_last()
 {
-    // if (ltplay_get_src() == SND_TEL || ltplay_get_src() == SND_EBS || ltplay_get_src() == SND_SMS)
-    //     return;
-    // if(ltmp3_get_audio_cnt() == 0 )
-    // {
-    //     char *MP3List_check = "当前没有音乐列表";
-	//     //ltplay_check_play(SND_SMS);
-	//     ltapi_play_tts(MP3List_check, strlen(MP3List_check));
-    //     LT_AUDIO_LOG("MP3 have no  imessage!!");
-    //     return;
-    // }           
-    // if (ltplay_get_src() != SND_MP3)
-    // {
-    //     set_function_state(MP3, ltmp3_get_cur_audio_index()+1); // 提前显示MP3的面板
-    // }
-    // ltplay_check_play(SND_MP3);
-
-    // ql_aud_player_stop();
-    // play_flag = 1;  //播放上一首
-    //ltmp3_set_audio_sta(LTAPCU_STA_PLAY);
 }
 
 static void lt_audiourl_play_callback_register()
@@ -436,11 +416,9 @@ static void ql_key_audio_changemod(void *data)
         // if(this->current_stop)
         //     this->current_stop();
         audio_mod = 1;
-        // ql_rtos_task_sleep_s(2);
-        char *fm_mode = "切换到网络音频 模式";
-        LT_AUDIO_LOG("切换到网络音频 模式");
+        LT_AUDIO_LOG("切换到网络音频模式");
         // ltplay_check_play(SND_SMS);
-        ltapi_play_tts(fm_mode, strlen(fm_mode));
+        ltapi_play_tts(TTS_STR_MODE_SWITCH_NET_AUDIO, strlen(TTS_STR_MODE_SWITCH_NET_AUDIO));
         lt_audiourl_key_callback_register();  // 注册key 回调
         lt_audiourl_play_callback_register(); // 注册play回调
         lt_mp3url_asr_callback_register();
@@ -449,10 +427,9 @@ static void ql_key_audio_changemod(void *data)
     {
         audio_mod = 0;
         // ql_rtos_task_sleep_s(2);
-        char *fm_mode = "切换到本地音频 模式";
-        LT_AUDIO_LOG("切换到本地音频 模式");
+        LT_AUDIO_LOG("切换到本地音频模式");
         // ltplay_check_play(SND_SMS);
-        ltapi_play_tts(fm_mode, strlen(fm_mode));
+        ltapi_play_tts(TTS_STR_MODE_SWITCH_LOC_AUDIO, strlen(TTS_STR_MODE_SWITCH_LOC_AUDIO));
         lt_audio_key_callback_register();  // 注册key 回调
         lt_audio_play_callback_register(); // 注册play回调
         lt_mp3_asr_callback_register();

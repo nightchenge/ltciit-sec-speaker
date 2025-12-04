@@ -1,8 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2025-11-26 16:24:10
- * @LastEditTime: 2025-12-01 21:04:54
- * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-12-04 14:35:49
+ * @LastEditors: ubuntu
  * @Description: In User Settings Edit
  * @FilePath: /LTE01R02A02_C_SDK_G/components/ql-application/ltmain/dynamic_config/dynamic_config.c
  */
@@ -236,28 +236,5 @@ void ql_entry_dyn(void)
 
     check_type_version();
 
-    // // 场景 A: 控制 GPS
-    // if (DynConfig_IsEnabled("ENABLE_GPS"))
-    // {
-    //     LT_LOG_TAG("Config says: Start GPS...");
-    //     // gps_init();
-    // }
-    // else
-    // {
-    //     LT_LOG_TAG("Config says: GPS is OFF");
-    // }
 
-    // // 场景 B: 控制 MQTT
-    // if (DynConfig_IsEnabled("ENABLE_MQTT"))
-    // {
-    //     LT_LOG_TAG("Config says: Start MQTT...");
-    //     // mqtt_init();
-    // }
-
-    // // 场景 C: 使用文件中没有定义的 Key
-    // // 即使 "UNKNOWN_FEATURE" 不在 json 里，代码也不会崩，直接返回 false
-    // if (DynConfig_IsEnabled("UNKNOWN_FEATURE"))
-    // {
-    //     LT_LOG_TAG("Should not be here");
-    // }
 }

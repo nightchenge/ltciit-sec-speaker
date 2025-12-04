@@ -1034,8 +1034,7 @@ static void func_whiteListState(cJSON *data)
 }
 static void mqtt_reboot()
 {
-    char *data = "设备将在5秒后重新启动.";
-    ltapi_play_tts(data, strlen(data));
+    ltapi_play_tts(TTS_STR_SYS_REBOOT_5S, strlen(TTS_STR_SYS_REBOOT_5S));
     ql_rtos_task_sleep_s(5);
     ql_power_reset(RESET_NORMAL);
 }

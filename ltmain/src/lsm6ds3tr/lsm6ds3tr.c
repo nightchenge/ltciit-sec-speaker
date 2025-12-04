@@ -329,8 +329,7 @@ static void fall_key_click_db()
         ql_rtos_task_sleep_ms(500); 
     }
 
-    char *ff_check = "当前告警已取消";
-    ltapi_play_tts(ff_check, strlen(ff_check));
+    ltapi_play_tts(TTS_STR_FALL_CANCEL, strlen(TTS_STR_FALL_CANCEL));
     QL_APP_LSM_LOG("FALL_TEST: api_mqtt_fall_publish(3);");
     api_mqtt_fall_publish(3);  // 上报已处理状态
     
@@ -428,8 +427,7 @@ static void lsm6ds3tr_thread(void *param)
 
                 //播报tts
                 QL_APP_LSM_LOG("Received LT_SYS_FALL_DETECTED event.");   
-                char *ff_check= "跌倒警报！15秒后自动拨打紧急求助电话。若为误报，请立即取消。";
-                ltapi_play_tts(ff_check, strlen(ff_check));
+                ltapi_play_tts(TTS_STR_FALL_ALERT, strlen(TTS_STR_FALL_ALERT));
 
                 //上报跌到预警信息
                 api_mqtt_fall_publish(1);
