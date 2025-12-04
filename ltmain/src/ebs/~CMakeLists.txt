@@ -1,0 +1,26 @@
+set(target ebs)
+
+add_library(${target} STATIC)
+set_target_properties(${target} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${out_app_lib_dir})
+target_compile_definitions(${target} PRIVATE OSI_LOG_TAG=LOG_TAG_QUEC)
+
+target_include_directories(${target} PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/ebm
+            ${CMAKE_CURRENT_SOURCE_DIR}/param
+            ${CMAKE_CURRENT_SOURCE_DIR}/protocol
+            ${CMAKE_CURRENT_SOURCE_DIR}/protocol/ebs_cmd
+            ${CMAKE_CURRENT_SOURCE_DIR}/protocol/fm
+            ${CMAKE_CURRENT_SOURCE_DIR}/protocol/ip
+            ${CMAKE_CURRENT_SOURCE_DIR}/util
+            ${CMAKE_CURRENT_SOURCE_DIR}/player)
+
+file(GLOB LIBRARY_SOURCES lt_datacall.c lt_datacall.h lt_ebs.c lt_ebs.h ebs.h ebm/*.h ebm/*.c param/*.h param/*.c protocol/*.h protocol/*.c protocol/ebs_cmd/*.h protocol/ebs_cmd/*.c protocol/fm/*.h protocol/fm/*.c protocol/ip/*.h protocol/ip/*.c util/*.h util/*.c player/*.h player/*.c)
+
+target_sources(${target} PRIVATE
+              ${LIBRARY_SOURCES}
+)
+
+relative_glob(srcs ebs.h ebm/*.h ebm/*.c param/*.h param/*.c protocol/*.h protocol/*.c protocol/ebs_cmd/*.h protocol/ebs_cmd/*.c protocol/fm/*.h protocol/fm/*.c protocol/ip/*.h protocol/ip/*.c util/*.h util/*.c player/*.h player/*.c)
+beautify_c_code(${target} ${srcs})
+

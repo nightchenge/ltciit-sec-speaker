@@ -1,0 +1,1 @@
+int lt_main_app_init(void);
