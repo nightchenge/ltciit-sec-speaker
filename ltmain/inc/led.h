@@ -27,7 +27,7 @@ extern "C"
 
     typedef int QlI2CStatus;
     typedef void *ql_task_t;
-
+    
     enum led_function
     {
         RT_TIME = 1,
@@ -57,22 +57,6 @@ extern "C"
         LED_POWER_ON
     } lt_led_status_t;
 
-    // enum led_key
-    // {
-    //     VOICE_LED,
-    //     SMS_LED,
-    //   //  SOS_LED,
-    //     FM_LED,
-    //     MP3_LED
-    // };
-    // enum led_key
-    // {
-    //     FM_LED=0,
-    //     VOICE_LED,
-    //     SMS_LED,
-    //     SOS_LED,
-    //     MP3_LED
-    // };
 
     /**
      * @brief 打开/关闭LED电源控制开关

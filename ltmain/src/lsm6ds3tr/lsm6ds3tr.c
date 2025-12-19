@@ -12,7 +12,9 @@
 #include "ltplay.h"
 #include "ltsystem.h"
 #include "ltvoicecall.h"
-
+#include "led.h"
+#include "volume_knob.h"
+#include "ltconf.h"
 ql_timer_t lt_lsm_temp_key_timer = NULL;     // 定义按键超时定时器
 static uint8_t key_pressed = 0;              // 按键按下标志
 
@@ -88,6 +90,7 @@ static void _gpioint_callback01(void *param)
     // 在中断发生时，发送事件位通知主线程 (lsm_task)
     if (lsm_task)
     {
+        ltapi_set_knobvolume(50);//设置默认音量
         ql_event_t event = {.id = LT_SYS_FALL_DETECTED};
         ql_rtos_event_send(lsm_task, &event);
         
@@ -112,39 +115,86 @@ void lsm6ds3tr_dump_all_regs_for_debug(void)
     platform_read(dev_ctx.handle, LSM6DS3TR_C_FUNC_SRC1, &b, 1); QL_APP_LSM_LOG("FUNC_SRC1 =0x%02X", b);
 }
 
-// ... (lsm6ds3tr_enable_tilt_int_on_int2 函数保持不变) ...
+static uint8_t is_ff_detection_enabled = PROPERTY_ENABLE; // Default ON/Enabled
+
+// New function to handle the disable logic
+int lsm6ds3tr_disable_fall_detection(void)
+{
+    int32_t ret = 0;
+    
+    // Disable the FF interrupt routing from the embedded function (MD2_CFG)
+    // We achieve this by setting the FF threshold to zero (the easiest way to stop FF)
+    // Or, more robustly, setting ODR to OFF for XL/G, but that stops all data.
+    // Let's modify the routing to OFF and disable the embedded function flag.
+
+    lsm6ds3tr_c_int2_route_t int2_route;
+    
+    // 1. Disable the embedded function flag (func_en in CTRL10_C)
+    ret += lsm6ds3tr_c_func_en_set(&dev_ctx, PROPERTY_DISABLE);
+
+    // 2. Clear the FF route from INT2
+    // Reading current settings (INT2_CTRL, MD2_CFG)
+    if (lsm6ds3tr_c_pin_int2_route_get(&dev_ctx, &int2_route) == 0)
+    {
+        int2_route.int2_ff = PROPERTY_DISABLE; // Clear the FF flag
+        // Keep int2_drdy_xl ON if it's there as a safeguard
+        ret += lsm6ds3tr_c_pin_int2_route_set(&dev_ctx, int2_route);
+    }
+
+    if (ret != 0) {
+        QL_APP_LSM_LOG("Failed to disable FF. Ret: %d", ret);
+        return -1;
+    }
+    
+    is_ff_detection_enabled = PROPERTY_DISABLE;
+    QL_APP_LSM_LOG("Free Fall Detection is now DISABLED.");
+    return 0;
+}
+
+// ====================================================================
+// ===== 新增: 跌倒参数调试接口 (Fall Detection Parameters)        =====
+// ====================================================================
 
 /**
- * @brief 启用自由落体 (Free Fall, FF) 检测并将中断路由到 INT2 引脚
+ * @brief 动态设置跌倒检测 (自由落体 FF) 的灵敏度参数。
+ *
+ * @param ff_threshold FF 加速度阈值 (0-7, 对应 156mg 到 500mg)。
+ * @param ff_duration FF 持续时间 (0-31, 单位为 ODR 周期)。
+ * @return int 0: 成功, -1: 失败。
  */
-int lsm6ds3tr_enable_fall_detection_on_int2(void)
+int lsm6ds3tr_set_fall_detection_params(uint8_t ff_threshold, uint8_t ff_duration)
 {
-    int32_t ret;
+    int32_t ret = 0;
     lsm6ds3tr_c_int2_route_t int2_route;
 
-    // --- 1. 启用嵌入式功能 ---
     ret = lsm6ds3tr_c_func_en_set(&dev_ctx, PROPERTY_ENABLE);
     if (ret != 0) {
         QL_APP_LSM_LOG("Failed to enable func_en. Ret: %d", ret);
         return -1;
     }
+    // 检查输入范围 (ff_threshold 只有 3 位，ff_duration 只有 5 位)
+    if (ff_threshold > 7 || ff_duration > 31)
+    {
+        QL_APP_LSM_LOG("FF Param Error: Threshold (0-7) or Duration (0-31) out of range.");
+        return -1;
+    }
 
-    // --- 2. 配置自由落体 (FF) 阈值和持续时间 ---
-    // 设置 FF 阈值: 312mg (LSM6DS3TR_C_FF_TSH_312mg = 3)
-    ret = lsm6ds3tr_c_ff_threshold_set(&dev_ctx, LSM6DS3TR_C_FF_TSH_312mg);
+    // 1. 设置 FF 阈值 (ff_ths, 3 位)
+    // 阈值越大 (例如 7)，FF 越不敏感 (需要加速度更接近 0g)。
+    ret += lsm6ds3tr_c_ff_threshold_set(&dev_ctx, (lsm6ds3tr_c_ff_ths_t)ff_threshold);
     if (ret != 0) {
         QL_APP_LSM_LOG("Failed to set FF threshold. Ret: %d", ret);
         return -1;
     }
     
-    // 设置 FF 持续时间: 5 个 ODR 周期 
-    ret = lsm6ds3tr_c_ff_dur_set(&dev_ctx, 5);
+    // 2. 设置 FF 持续时间 (ff_dur, 5 位)
+    // 持续时间越长 (例如 31)，FF 越不敏感 (需要持续更久)。
+    ret = lsm6ds3tr_c_ff_dur_set(&dev_ctx, ff_duration);
     if (ret != 0) {
         QL_APP_LSM_LOG("Failed to set FF duration. Ret: %d", ret);
         return -1;
     }
-    
-    // --- 3. 路由 FF 中断到 INT2 ---
+        // --- 3. 路由 FF 中断到 INT2 ---
     ret = lsm6ds3tr_c_pin_int2_route_get(&dev_ctx, &int2_route);
     if (ret != 0) {
         QL_APP_LSM_LOG("Failed to get INT2 route. Ret: %d", ret);
@@ -165,11 +215,12 @@ int lsm6ds3tr_enable_fall_detection_on_int2(void)
         QL_APP_LSM_LOG("Failed to set INT2 FF routing. Ret: %d", ret);
         return -1;
     }
-
-    QL_APP_LSM_LOG("Free Fall Detection enabled and routed to INT2 (MD2_CFG=0x10, INT2_CTRL=0x01).");
+    
+    is_ff_detection_enabled = PROPERTY_ENABLE;
+    
+    QL_APP_LSM_LOG("FF Params Set: Threshold=%d, Duration=%d (FF Detection is now ACTIVE).", ff_threshold, ff_duration);
     return 0;
 }
-
 
 int lsm6ds3tr_sensor_init(void)
 {
@@ -387,14 +438,24 @@ static void lsm6ds3tr_thread(void *param)
     ql_int_register(LSM_INT_GPIO_NUM, EDGE_TRIGGER, DEBOUNCE_EN, EDGE_FALLING, PULL_NONE, _gpioint_callback01, NULL); // 注册中断
     ql_int_enable(LSM_INT_GPIO_NUM); // 使能中断
 
+    int saved_enable = 0;
+    int saved_th = 3;
+    int saved_dur = 5;
 
-    // **启用跌倒检测中断**
-    if (lsm6ds3tr_enable_fall_detection_on_int2() != 0)
+    // 一次性获取所有配置
+    mqtt_param_fallDetect_get(&saved_enable, &saved_th, &saved_dur);
+
+    if (saved_enable == 1)
     {
-        QL_APP_LSM_LOG("Failed to enable Fall Detection Interrupt.");
+        QL_APP_LSM_LOG("Restoring FF config: Enable=1, Th=%d, Dur=%d", saved_th, saved_dur);
+        // 调用驱动接口恢复
+        lsm6ds3tr_set_fall_detection_params((uint8_t)saved_th, (uint8_t)saved_dur);
     }
-    
-   // lsm6ds3tr_data_t sensor_data; 
+    else
+    {
+        QL_APP_LSM_LOG("FF config is Disabled at startup.");
+        lsm6ds3tr_disable_fall_detection();
+    }
     
     while (1)
     {
@@ -409,7 +470,7 @@ static void lsm6ds3tr_thread(void *param)
         {
             case LT_SYS_FALL_DETECTED:
             {       
-
+                lt_panel_light_msg(0, NULL, 0);//跌倒检测直接退出低功耗模式
                 if(SND_TEL == ltplay_get_src() )
                 {
                     //上报跌到已处理
@@ -426,7 +487,7 @@ static void lsm6ds3tr_thread(void *param)
                 lt_fall_temp_temp_key_callback_register();
 
                 //播报tts
-                QL_APP_LSM_LOG("Received LT_SYS_FALL_DETECTED event.");   
+                QL_APP_LSM_LOG("Received LT_SYS_FALL_DETECTED event.");
                 ltapi_play_tts(TTS_STR_FALL_ALERT, strlen(TTS_STR_FALL_ALERT));
 
                 //上报跌到预警信息

@@ -13,7 +13,7 @@
 #include "ql_audio.h"
 #include "ltfm.h"
 
-// --- 日志定义 (参考 lsm6ds3tr.c) ---
+// --- 日志定义---
 #define QL_APP_VOL_LOG_LEVEL QL_LOG_LEVEL_INFO
 #define QL_VOLDEMO_LOG(msg, ...) QL_LOG(QL_APP_VOL_LOG_LEVEL, "lt_vol", msg, ##__VA_ARGS__)
 
@@ -22,9 +22,8 @@
 #define PIN_ENCODER_B GPIO_24
 #define VOLUME_STEP 7
 
-// 定义事件ID (参考 lsm6ds3tr.c 中的 LT_SYS_FALL_DETECTED)
+// 定义事件ID 
 #define CMD_EVENT_VOLUME_CHANGE (0x1001)
-
 // 全局变量
 volatile int volume = 50;
 
@@ -39,6 +38,24 @@ void ltapi_set_on_volume_changed(on_volume_changed cb)
     on_volume_changed_cb = cb;
 }
 
+void ltapi_set_knobvolume(int vol)
+{
+    if (vol > volume)
+    {
+        volume = vol;
+    }
+    if (volume_knob_task != NULL)
+    {
+        ql_event_t event = {0};
+
+        // 2. 组装事件
+        event.id = CMD_EVENT_VOLUME_CHANGE;
+
+        event.param1 = 0;
+            // 3. 发送事件 (参考 lsm6ds3tr.c: ql_rtos_event_send(lsm_task, &event);)
+        ql_rtos_event_send(volume_knob_task, &event);
+    }
+}
 // ====================================================================
 // ===== 中断回调函数 (参考 _gpioint_callback01)                  =====
 // ====================================================================
@@ -86,6 +103,8 @@ static void volume_knob_thread(void *arg)
     ql_int_register(PIN_ENCODER_A, EDGE_TRIGGER, DEBOUNCE_EN, EDGE_FALLING, PULL_UP, encoder_isr_callback, NULL);
     ql_int_enable(PIN_ENCODER_A);
 
+    ql_aud_set_volume(QL_AUDIO_PLAY_TYPE_VOICE, 6);
+    ql_aud_set_volume(QL_AUDIO_PLAY_TYPE_LOCAL, 6);
     QL_VOLDEMO_LOG("中断初始化完成");
 
     while (1)

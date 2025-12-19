@@ -2,8 +2,8 @@
 /*
  * @Author: your name
  * @Date: 2023-09-23 15:36:46
- * @LastEditTime: 2025-08-18 16:17:51
- * @LastEditors: zhouhao
+ * @LastEditTime: 2025-12-17 09:50:03
+ * @LastEditors: ubuntu
  * @Description: In User Settings Edit
  * @FilePath: /LTE01R02A02_C_SDK_G/components/ql-application/ltmain/src/ltsystem/ltsystem.c
  */
@@ -37,6 +37,7 @@
 #include "ltconf.h"
 #include "ltsdmmc.h"
 #include "ltuart2frx8016.h"
+#include "ec800g_ota_master.h"
 
 #define LT_SYS_LOG_LEVEL QL_LOG_LEVEL_INFO
 #define LT_SYS_LOG(msg, ...) QL_LOG(LT_SYS_LOG_LEVEL, "lt_system", msg, ##__VA_ARGS__)
@@ -51,14 +52,15 @@
 ql_task_t lt_system_pool_task = NULL;
 ql_timer_t lt_system_pool_timer = NULL;
 
-static lt_lp_status_t lp_status = IDLE_MODE;
+
 
 static uint32_t led_haf_br = 30;
 static bool update_mode = FALSE;
+static lt_lp_status_t lp_status = IDLE_MODE;
 static i2c_init_flag_t i2c_1_isInit = Uninitialized;
 
-#define VCHG_USB_CHARGE 3800
 bool lt_get_usb_charge_status()
+
 {
     uint32_t vchg_vol = 0;
     ql_get_vchg_vol(&vchg_vol);
@@ -104,9 +106,9 @@ void ltset_update_mode()
 
 uint32_t ltget_lp_ledbr()
 {
-    if (1 == mqtt_param_ledEnable_get())
-        return 65535;
-
+    //设置的常量模式 或者接着电，处在升级模式，处于语音唤醒状态，处于OTA状态
+    if (TRUE == mqtt_param_ledEnable_get() || (TRUE == lt_get_usb_charge_status())  || (TRUE == ltget_update_mode()) || (FALSE != lt_ltasr_wakeup()) || (TRUE == is_ota_mode()))
+        return LED_BRTIME_MAX;
     return led_haf_br;
 }
 void ltset_lp_ledbr(uint32_t brtime)

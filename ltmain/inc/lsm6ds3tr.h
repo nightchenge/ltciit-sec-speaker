@@ -3,7 +3,7 @@
  * @Author: 
  * @Date: 2025-11-18 00:46:31
  * @LastModifiedBy: 
- * @LastEditTime: 2025-11-20 00:18:05
+ * @LastEditTime: 2025-12-12 10:29:24
  */
 #ifndef __LSM6DS3TR_H__
 #define __LSM6DS3TR_H__
@@ -80,6 +80,24 @@ void ql_lsm6ds3tr_init(void);
 
 void lt_fall_call_pub(int state);
 uint8_t get_fall_call_flag();
+
+/**
+ * @brief 动态设置跌倒检测 (自由落体 FF) 的灵敏度参数。
+ *
+ * @param ff_threshold FF 加速度阈值 (0-7, 对应 156mg 到 500mg)。
+ * @param ff_duration FF 持续时间 (0-31, 单位为 ODR 周期)。
+ * @return int 0: 成功, -1: 失败。
+ */
+int lsm6ds3tr_set_fall_detection_params(uint8_t ff_threshold, uint8_t ff_duration);
+
+/**
+ * @brief 禁用跌倒检测 (自由落体 FF)。
+ *
+ * @return int 0: 成功, -1: 失败。
+ */
+int lsm6ds3tr_disable_fall_detection(void);
+
+
 
 #ifdef __cplusplus
 }

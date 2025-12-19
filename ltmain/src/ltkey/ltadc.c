@@ -1,8 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2023-09-07 11:16:24
- * @LastEditTime: 2025-08-25 10:35:24
- * @LastEditors: zhouhao
+ * @LastEditTime: 2025-12-05 16:49:38
+ * @LastEditors: ubuntu
  * @Description: In User Settings Edit
  * @FilePath: /LTE01R02A01_BETA0726_C_SDK_G/components/ql-application/ltmain/src/ltkey/ltadc.c
  */
@@ -175,63 +175,33 @@ int lt_adc_battery_get(void)
     static int battery_per_lp = 100;
     ql_adc_get_volt(QL_ADC0_CHANNEL, &adc_value); // 512-1328
     QL_ADCDEMO_LOG("battery_adcvalue=[%d]", adc_value); 
-    float battery_value = 0.23 * adc_value + 4.35;
-   // lt_uart_send_adc(adc_value);
-    if(battery_value >= 436)
+    if(adc_value >= 1883)
         battery_per = 100;
-    else if (battery_value >= 420)
+    else if (adc_value >= 1849)  
         battery_per = 95;
-    else if (battery_value >= 395)
+    else if (adc_value >= 1838)
         battery_per = 90;
-    else if (battery_value >= 379)
+    else if (adc_value >= 1822)
         battery_per = 80;
-    else if (battery_value >= 374)
+    else if (adc_value >= 1803)      
         battery_per = 70;
-    else if (battery_value >= 370)
+    else if (adc_value >= 1766)
         battery_per = 60;
-    else if (battery_value >= 366)
+    else if (adc_value >= 1740)
         battery_per = 50;
-    else if (battery_value >= 363)
+    else if (adc_value >= 1707)
         battery_per = 40;
-    else if (battery_value >= 358)
+    else if (adc_value >= 1656)
         battery_per = 30;
-    else if (battery_value >= 350)
+    else if (adc_value >= 1613)  
         battery_per = 20;
-    else if (battery_value >= 343)
+    else if (adc_value >= 1559)
         battery_per = 10;
-    else if (battery_value >= 300)
+    else if (adc_value >= 1535)
         battery_per = 5;
     else
         battery_per = 0;
 
-
-    // if(battery_value >= 436)
-    //     battery_per = 100;
-    // else if (battery_value >= 420)
-    //     battery_per = 95;
-    // else if (battery_value >= 406)
-    //     battery_per = 90;
-    // else if (battery_value >= 398)
-    //     battery_per = 80;
-    // else if (battery_value >= 387)
-    //     battery_per = 70;
-    // else if (battery_value >= 382)
-    //     battery_per = 60;
-    // else if (battery_value >= 379)
-    //     battery_per = 50;
-    // else if (battery_value >= 377)
-    //     battery_per = 40;
-    // else if (battery_value >= 374)
-    //     battery_per = 30;
-    // else if (battery_value >= 368)
-    //     battery_per = 20;
-    // else if (battery_value >= 345)
-    //     battery_per = 10;
-    // else if (battery_value >= 300)
-    //     battery_per = 5;
-    // else
-    //     battery_per = 0;
-    
     QL_ADCDEMO_LOG("battery_value=[%d]", battery_per);
     if(battery_per == 0)
         return battery_per_lp;

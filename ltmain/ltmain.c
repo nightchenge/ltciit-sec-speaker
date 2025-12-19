@@ -57,7 +57,6 @@ static const app_mgmt_info_t g_module_infos[] =
 
     /* --- STAGE 1: 本地驱动 & 音频 (Audio Ready) --- */
     {APP_STAGE_1, "uart_frx",     4 * 1024,  (app_mgmt_init_t *)lt_uart2frx8016_init, NULL, NULL},
-    {APP_STAGE_1, "keypad",       4 * 1024,  (app_mgmt_init_t *)ql_key_app_init,      NULL, NULL},
     {APP_STAGE_1, "volume_knob",  0,         (app_mgmt_init_t *)lt_volume_knob_init,  NULL, NULL},
 
     {APP_STAGE_1, "sd_card",      4 * 1024,  (app_mgmt_init_t *)lt_sdmmc_app_init,    NULL, NULL},
@@ -75,6 +74,7 @@ static const app_mgmt_info_t g_module_infos[] =
     {APP_STAGE_2, "datacall",     10 * 1024, (app_mgmt_init_t *)lt_datacall_app_init, NULL, NULL},
 
     /* --- STAGE 3: 核心业务 --- */
+    {APP_STAGE_3, "keypad",       4 * 1024,  (app_mgmt_init_t *)ql_key_app_init,      NULL, NULL},
     // 应急广播 (EBS)
     {APP_STAGE_3, "ebs_service",  20 * 1024, (app_mgmt_init_t *)lt_ebs_app_init,     NULL, NULL},
     // MQTT 云连接

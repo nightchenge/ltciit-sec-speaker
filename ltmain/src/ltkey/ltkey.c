@@ -514,7 +514,7 @@ void KeyProcess(void)
     }
 }
 
-void _ql_key_demo_init(void)
+void lt_key_demo_init(void)
 {
     uint16_t num;
     ql_GpioDir gpio_dir;
@@ -548,19 +548,6 @@ void _ql_key_demo_init(void)
     }
 }
 
-static void ql_key_demo_thread(void *param)
-{
-    QL_keyDEMO_LOG("key demo thread enter, param 0x%x", param);
-    MyKey_Init();//key event init
-    _ql_key_demo_init();
-
-    while (1)
-    {
-        ql_rtos_task_sleep_s(3);
-    }
-
-    ql_rtos_task_delete(NULL);
-}
 
 static void ql_key_scan_event_thread(void *param)
 {
@@ -632,17 +619,10 @@ static void ql_key_handel_event_thread(void *param)
 void ql_key_app_init(void)
 {
     QlOSStatus err = QL_OSI_SUCCESS;
-    ql_task_t key_task = NULL;
 
-    err = ql_rtos_task_create(&key_task, 1024, APP_PRIORITY_NORMAL, "ql_keydemo", ql_key_demo_thread, NULL, 1);
-    if (err != QL_OSI_SUCCESS)
-    {
-        QL_keyDEMO_LOG("gpio demo task created failed");
-    }
-    ql_rtos_task_sleep_s(3);
-  
-    //KeyRegister();
-    //ltmp3_init(NULL);
+    MyKey_Init();//key event init
+    lt_key_demo_init();
+
     ql_task_t key_scan_event_task = NULL;
     err = ql_rtos_task_create(&key_scan_event_task, 10240, APP_PRIORITY_NORMAL, "key_scan_event_task", ql_key_scan_event_thread, NULL, 1);
     if (err != QL_OSI_SUCCESS)

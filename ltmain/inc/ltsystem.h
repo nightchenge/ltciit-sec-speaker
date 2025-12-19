@@ -1,6 +1,6 @@
 /*
 
- * @LastEditTime: 2025-12-03 16:50:14
+ * @LastEditTime: 2025-12-18 08:57:10
  * @LastEditors: ubuntu
  *@Description: 系统状态定时检测
  * @FilePath: /LTE01R02A02_C_SDK_G/components/ql-application/ltmain/inc/ltsystem.h
@@ -25,7 +25,7 @@ extern "C"
 // #define TYPE_FUNC TYPE_GENERIC
 
 
-#define SOFTWARE_VERSION "V3.00.24" //V2.00.xx  通用版，V2.01.xx 鼓楼定制 ,V2.02.xx 栖霞定制  V2.03.xx 四川定制（只有一版）
+#define SOFTWARE_VERSION "V3.00.25" //V2.00.xx  通用版，V2.01.xx 鼓楼定制 ,V2.02.xx 栖霞定制  V2.03.xx 四川定制（只有一版）
 
 #if PACK_TYPE == PACK_OLD
 #define HARDWARE_VERSION "V2.01.04" //V1.01.01 源流结构,低功耗板子 V1.01.02 按键改制 短信和电源按键替换 v1.01.03 电源模块整改，vbus电压从4200->3800 V2.01.04 新硬件支持编码器和陀螺仪
@@ -34,8 +34,9 @@ extern "C"
 #else
 #define HARDWARE_VERSION "V1.00.01" // 源流结构,老板子
 #endif
-#define LED_HALF_BR 30
-#define LED_OFF_BR 60
+
+#define VCHG_USB_CHARGE 3800
+#define LED_BRTIME_MAX 65535 //在设备需求常亮状态下返回的值
 
     typedef enum
     {

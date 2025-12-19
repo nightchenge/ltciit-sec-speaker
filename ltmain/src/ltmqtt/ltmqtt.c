@@ -42,6 +42,7 @@
 #include "ltsdmmc.h"
 #include "ltvoicecall.h"
 #include "ltrecord.h"
+#include "lsm6ds3tr.h"
 typedef struct lt_mqtt
 {
     ql_task_t mqtt_task;
@@ -290,6 +291,9 @@ void api_mqtt_Status_Publish()
 
     //新增led开关上报
     cJSON_AddNumberToObject(root, "ledEnable", mqtt_param_ledEnable_get());
+    // 新增亮度和亮屏时间上报
+    cJSON_AddNumberToObject(root, "ledBrightness", mqtt_param_ledBrightness_get());
+    cJSON_AddNumberToObject(root, "ledScreenOnTime", mqtt_param_ledScreenOnTime_get());
 
     unsigned char signal;
     ql_nw_get_csq(0, &signal);
@@ -301,6 +305,14 @@ void api_mqtt_Status_Publish()
 
     cJSON_AddNumberToObject(root, "whiteListState", mqtt_param_whiteListState_get());
     cJSON_AddNumberToObject(root, "whiteListDisableTime", mqtt_param_whiteListDisableTime_get());
+
+    // 新增跌倒检测参数上报
+    int ff_en = 0,ff_th = 3,ff_dur = 10;
+    mqtt_param_fallDetect_get(&ff_en, &ff_th, &ff_dur);
+    memset(temp, 0x00, sizeof(temp));
+    sprintf(temp, "%d,%d,%d", ff_en, ff_th, ff_dur);
+
+    cJSON_AddStringToObject(root, "fallDetectionCfg", temp);
 
    // CellInfo cell;
     lt_get_gnsss_t(&cell);
@@ -329,10 +341,8 @@ void api_mqtt_location_pulish(char *buf)
     // 新增 cell 信息
     cJSON *cellObj = cJSON_CreateObject();
     // lt_get_gnsss_t(&cell);
-    QL_MQTT_LOG("mcc == %d\n", cell.mcc);
-    QL_MQTT_LOG("mnc == %d\n", cell.mnc);
-    QL_MQTT_LOG("lac == %d\n", cell.lac);
-    QL_MQTT_LOG("cellid == %d\n", cell.cellid);
+    QL_MQTT_LOG("mcc == %d,mnc == %d,lac == %d,cellid == %d\n", cell.mcc, cell.mnc, cell.lac, cell.cellid);
+
     cJSON_AddNumberToObject(cellObj, "mcc", cell.mcc);
     cJSON_AddNumberToObject(cellObj, "mnc", cell.mnc);
     cJSON_AddNumberToObject(cellObj, "lac", cell.lac);
@@ -983,12 +993,12 @@ static void func_clockID(cJSON *data)
     //  if(clockAction != NULL && clockAction->valueint == 1)
     if (clockAction != NULL)
     {
-        if (clockUrl != NULL && clockID != NULL && clockAction->valueint != 0)
+        if (clockUrl != NULL && clockID != NULL && clockAction->valueint != 0 && clockAction->valueint != 3)
         {
             // int lt_clk_instruct_add(char *clockID, int  clockAction, char *  alarmClockSet, char * clockUrl,int url_len,void (*start_handle)(void *buf, int date_len), void (*stop_handle)(void *buf, int date_len))
             lt_clk_instruct_add(clockID->valuestring, clockAction->valueint, alarmClockSet->valuestring, clockUrl->valuestring, strlen((const char *)clockUrl->valuestring), clock_msg_start_cb, clock_msg_stop_cb);
         }
-        if (clockAction->valueint == 0)
+        if (clockAction->valueint == 0 || clockAction->valueint == 3)
         {
             lt_clk_instruct_del(clockID->valuestring);
         }
@@ -1125,6 +1135,19 @@ static void func_ledEnable(cJSON *data)
     if (obj != NULL)
     {
         mqtt_param_ledEnable_set(obj->valueint);
+    }
+    // 新增亮度和亮屏时间设置
+    obj = cJSON_GetObjectItem(data, "ledBrightness");
+    if (obj != NULL)
+    {
+        mqtt_param_ledBrightness_set(obj->valueint);
+        lt_panel_light_msg(2, NULL, 0);//设置led亮度
+    }
+    obj = cJSON_GetObjectItem(data, "ledScreenOnTime");
+    if (obj != NULL)
+    {
+        mqtt_param_ledScreenOnTime_set(obj->valueint);
+        ltset_lp_ledbr(mqtt_param_ledScreenOnTime_get());//设置lp led亮屏时间
     }
 
     cJSON *cmdid = cJSON_GetObjectItem(data, "cmdID");
@@ -1507,6 +1530,12 @@ static void func_led_control(cJSON *data)
     cJSON *led_level = cJSON_GetObjectItem(data, "led_control");
     if (led_level)
     {
+        //加入值判断 5-15
+        if(led_level->valueint < 5 || led_level->valueint > 15)
+        {
+            QL_MQTT_LOG("led_level para invalid");
+            return;
+        }
         lt_vk16k33_set_brightness((uint8_t)led_level->valueint);
         QL_MQTT_LOG("led_level is %d", led_level->valueint);
     }
@@ -1548,6 +1577,108 @@ static void func_dl_config(cJSON *data)
     return;
 }
 
+/**
+ * @brief 3.x 跌倒检测参数配置下发 (带纠错和回退机制)
+ * 协议示例: { "cmdID": "...", "fallDetectionCfg": "1,3,5" } 
+ * 逻辑:
+ * 1. enable(必需): 0=关, 1=开. 
+ * 2. threshold(可选): 范围1-7. 若无效/缺失 -> 保持原配置.
+ * 3. duration(可选): 范围1-31. 若无效/缺失 -> 保持原配置.
+ */
+static void func_fallDetectionParams(cJSON *data)
+{
+    cJSON *cmdid = cJSON_GetObjectItem(data, "cmdID");
+    cJSON *fall_cfg_item = cJSON_GetObjectItem(data, "fallDetectionCfg");
+    
+    int cur_enable = 0;
+    int cur_th = 3;   // 默认安全值
+    int cur_dur = 5;  // 默认安全值
+    
+    mqtt_param_fallDetect_get(&cur_enable, &cur_th, &cur_dur);
+
+    int new_enable = cur_enable;
+    int new_th = cur_th;
+    int new_dur = cur_dur;
+
+    // 临时解析变量
+    int p_enable = -1, p_th = -1, p_dur = -1;
+    uint8_t result = 0;
+
+    if (fall_cfg_item == NULL || !cJSON_IsString(fall_cfg_item))
+    {
+        QL_MQTT_LOG("FF Cfg Fail: Invalid format.");
+        goto exit;
+    }
+
+    int count = sscanf(fall_cfg_item->valuestring, "%d,%d,%d", &p_enable, &p_th, &p_dur);
+
+    // 3. 处理 Enable (必需)
+    if (count >= 1)
+    {
+        if (p_enable == 0 || p_enable == 1) {
+            new_enable = p_enable;
+        } else {
+            QL_MQTT_LOG("FF Cfg Fail: Enable must be 0 or 1.");
+            goto exit;
+        }
+    }
+    else
+    {
+        QL_MQTT_LOG("FF Cfg Fail: Empty string.");
+        goto exit;
+    }
+
+    // 4. 处理 Threshold (可选，带纠错)
+    if (count >= 2)
+    {
+        // 如果下发的数值在 1-7 之间，则更新；否则保持 cur_th (原值)
+        if (p_th >= 1 && p_th <= 7) {
+            new_th = p_th;
+        } else {
+            QL_MQTT_LOG("FF Cfg: Threshold %d out of range(1-7), keeping old value %d.", p_th, cur_th);
+        }
+    }
+
+    // 5. 处理 Duration (可选，带纠错)
+    if (count >= 3)
+    {
+        // 如果下发的数值在 1-31 之间，则更新；否则保持 cur_dur (原值)
+        if (p_dur >= 1 && p_dur <= 31) {
+            new_dur = p_dur;
+        } else {
+            QL_MQTT_LOG("FF Cfg: Duration %d out of range(1-31), keeping old value %d.", p_dur, cur_dur);
+        }
+    }
+
+    // 6. 保存最终的有效配置
+    mqtt_param_fallDetect_set(new_enable, new_th, new_dur);
+
+    // 7. 应用配置到驱动
+    if (new_enable == 0)
+    {
+        if (lsm6ds3tr_disable_fall_detection() == 0)
+        {
+            QL_MQTT_LOG("FF Cfg Success: Disabled.");
+            result = 1;
+        }
+    }
+    else
+    {
+        // 使用最终确定的 new_th 和 new_dur
+        if (lsm6ds3tr_set_fall_detection_params((uint8_t)new_th, (uint8_t)new_dur) == 0)
+        {
+            QL_MQTT_LOG("FF Cfg Success: Enabled. Th=%d, Dur=%d", new_th, new_dur);
+            result = 1;
+        }
+    }
+
+exit:
+    if (cmdid != NULL)
+    {
+        api_mqtt_CmdResult_Publish(cmdid->valuestring, result);
+    }
+}
+
 mqtt_msg_dispose_t Disposes[] = {
     {"radioType", func_radioType},                 // 3.1
     {"familyName", func_telephone},             // 3.2
@@ -1573,6 +1704,7 @@ mqtt_msg_dispose_t Disposes[] = {
     {"aiResponse", func_aiResponse},                   //2.10 语音指令查询响应
     {"led_control", func_led_control},                   //新增：调节亮度响应
     {"dl_config", func_dl_config},                   //新增：下载配置文件
+    {"fallDetectionCfg", func_fallDetectionParams},                   //新增：设置跌倒检测参数(预留调试接口)
     
 };
 

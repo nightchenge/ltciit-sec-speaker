@@ -56,25 +56,25 @@ int play_callback(char *p_data, int len, enum_aud_player_state state)
 }
 
 
-static void ltapi_pause_mp3()
-{
- //   ql_aud_player_pause();
-    if(ql_aud_player_pause())
-	{
-		LT_AUDIO_LOG("pause failed");
-		return;
-	}
-}
+// static void ltapi_pause_mp3()
+// {
+//  //   ql_aud_player_pause();
+//     if(ql_aud_player_pause())
+// 	{
+// 		LT_AUDIO_LOG("pause failed");
+// 		return;
+// 	}
+// }
 
-static void ltapi_resume_mp3()
-{
- //   ql_aud_player_pause();
-    if(ql_aud_player_resume())
-	{
-		LT_AUDIO_LOG("resume failed");
-		return;
-	}
-}
+// static void ltapi_resume_mp3()
+// {
+//  //   ql_aud_player_pause();
+//     if(ql_aud_player_resume())
+// 	{
+// 		LT_AUDIO_LOG("resume failed");
+// 		return;
+// 	}
+// }
 static void ql_key_mp3_stop()
 {
     //set_function_state(RT_TIME);
@@ -92,40 +92,6 @@ static void ql_key_mp3_stop()
     set_blink("mp3",0);
     
 }
-
-static void ql_key_mp3_play()
-{
-    if (ltplay_get_src() == SND_TEL || ltplay_get_src() == SND_EBS || ltplay_get_src() == SND_SMS)
-        return ;
-    if(ltmp3_get_audio_cnt() == 0 )
-    {
-	    //ltplay_check_play(SND_SMS);
-	    ltapi_play_tts(TTS_STR_MP3_NO_LIST, strlen(TTS_STR_MP3_NO_LIST));
-        LT_AUDIO_LOG("MP3 have no  imessage!!");
-        return;
-    }
-       
-    if(ltplay_get_src() != SND_MP3 && LTAPCU_STA_STOP == ltmp3_get_audio_sta() )
-    {
-        set_function_state(MP3, ltmp3_get_cur_audio_index()+1);//提前显示MP3的面板
-        ltplay_check_play(SND_MP3);
-        ql_aud_player_stop();
-        ltmp3_set_audio_sta(LTAPCU_STA_PLAY);
-    }else{
-        if(LTAPCU_STA_PLAY == ltmp3_get_audio_sta())
-        {
-            ltmp3_set_audio_sta(LTAPCU_STA_PAUSE);
-            set_function_state(PAUS, 0);//paus
-            ltapi_pause_mp3();
-        }else if(LTAPCU_STA_PAUSE == ltmp3_get_audio_sta()){
-            ltmp3_set_audio_sta(LTAPCU_STA_PLAY);
-            set_function_state(MP3, ltmp3_get_cur_audio_index()+1);
-            ltapi_resume_mp3();
-        }
-        
-    }
-}
-
 
 uint8_t play_flag = 0;
 static void ql_key_mp3_next()
@@ -183,7 +149,7 @@ void lt_audio_play_callback_register()
     
     play_fsm_t audio_play_fsm = {
         .src = SND_MP3,
-        .enter_play_func = ql_key_mp3_play,
+        .enter_play_func = ql_key_mp3_next,
         .enter_stop_func = ql_key_mp3_stop,
     };
     ltplay_callback_register(&audio_play_fsm);

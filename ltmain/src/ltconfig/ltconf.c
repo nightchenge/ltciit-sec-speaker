@@ -291,15 +291,11 @@ auth_status_t phone_number_auth_verif(char *phone_number, int phone_number_len)
         {
             return AUTHED;
         }
-        // if (memcmp(phone, phone_number, phone_number_len) == 0)
-        // {
-        //     return AUTHED;
-        // }
     }
 
     if (!mqtt_param_phone_get(phone, sizeof(phone), FAMILY_TYPE))
     {
-        if (memcmp(phone, phone_number, phone_number_len) == 0)
+        if (strstr(phone, phone_number) != NULL)
         {
             return AUTHED;
         }
@@ -972,7 +968,7 @@ int mqtt_param_ledEnable_get()
     return 0;
 }
 
-int mqtt_param_ledEnable_set(int ledEnable)
+int mqtt_param_ledEnable_set(led_mode_t ledEnable)
 {
     if (config != NULL)
     {
@@ -996,6 +992,86 @@ int mqtt_param_ledEnable_set(int ledEnable)
     }
     return -1;
 }
+
+// ================= 新增参数实现 =================
+
+// 获取 LED 亮度
+int mqtt_param_ledBrightness_get()
+{
+    if (config == NULL) return 15; // 默认值 15
+    cJSON *temp = cJSON_GetObjectItem(config, "ledBrightness");
+    if (temp != NULL)
+    {
+        return temp->valueint;
+    }
+    return 15;
+}
+
+// 设置 LED 亮度
+int mqtt_param_ledBrightness_set(int brightness)
+{
+    if (config != NULL)
+    {
+        cJSON *temp = cJSON_GetObjectItem(config, "ledBrightness");
+        if (temp != NULL)
+        {
+            cJSON *value = cJSON_CreateNumber(brightness);
+            if (value != NULL)
+            {
+                cJSON_ReplaceItemInObject(config, "ledBrightness", value);
+                mqtt_param_save();
+                return 0;
+            }
+        }
+        else
+        {
+            cJSON_AddNumberToObject(config, "ledBrightness", brightness);
+            mqtt_param_save();
+            return 0;
+        }
+    }
+    return -1;
+}
+
+// 获取 亮屏时间
+int mqtt_param_ledScreenOnTime_get()
+{
+    if (config == NULL) return 60; // 默认值 60秒
+    cJSON *temp = cJSON_GetObjectItem(config, "ledScreenOnTime");
+    if (temp != NULL)
+    {
+        return temp->valueint;
+    }
+    return 60;
+}
+
+// 设置 亮屏时间
+int mqtt_param_ledScreenOnTime_set(int time)
+{
+    if (config != NULL)
+    {
+        cJSON *temp = cJSON_GetObjectItem(config, "ledScreenOnTime");
+        if (temp != NULL)
+        {
+            cJSON *value = cJSON_CreateNumber(time);
+            if (value != NULL)
+            {
+                cJSON_ReplaceItemInObject(config, "ledScreenOnTime", value);
+                mqtt_param_save();
+                return 0;
+            }
+        }
+        else
+        {
+            cJSON_AddNumberToObject(config, "ledScreenOnTime", time);
+            mqtt_param_save();
+            return 0;
+        }
+    }
+    return -1;
+}
+
+
 
 int mqtt_param_whiteListState_get()
 {
@@ -1113,6 +1189,66 @@ int mqtt_param_ebsinterval_set(int ri)
     return 0;
 }
 
+// =========================================================
+// 跌倒检测参数实现 (合并字段 "fallDetect": "enable,threshold,duration")
+// =========================================================
+
+int mqtt_param_fallDetect_get(int *enable, int *threshold, int *duration)
+{
+    if (enable == NULL || threshold == NULL || duration == NULL) {
+        return -1;
+    }
+
+    cJSON *temp = cJSON_GetObjectItem(config, "fallDetect");
+    if (temp != NULL && cJSON_IsString(temp))
+    {
+        // 解析字符串 "E,T,D"
+        int count = sscanf(temp->valuestring, "%d,%d,%d", enable, threshold, duration);
+        if (count == 3) {
+            return 0;
+        }
+    }
+    // 默认值：关闭, 阈值3, 持续时间5
+    *enable = 0;
+    *threshold = 3;
+    *duration = 10;
+    return 0;
+}
+
+int mqtt_param_fallDetect_set(int enable, int threshold, int duration)
+{
+    char buf[32] = {0};
+    
+    // 格式化为字符串
+    snprintf(buf, sizeof(buf), "%d,%d,%d", enable, threshold, duration);
+
+    if (config != NULL)
+    {
+        cJSON *temp = cJSON_GetObjectItem(config, "fallDetect");
+        if (temp != NULL)
+        {
+            cJSON *value = cJSON_CreateString(buf);
+            if (value != NULL)
+            {
+                cJSON_ReplaceItemInObject(config, "fallDetect", value);
+                mqtt_param_save();
+                return 0;
+            }
+        }
+        else
+        {
+            cJSON_AddStringToObject(config, "fallDetect", buf);
+            mqtt_param_save();
+            return 0;
+        }
+    }
+    return -1;
+}
+
+
+
+
+
 void print_json_tree(cJSON *root)
 {
     // 确保传入的是对象或数组
@@ -1140,7 +1276,7 @@ void print_json_tree(cJSON *root)
 
 static void json_config_init()
 {
-    char buff[20480];
+    char buff[20480] ={0};
     QFILE fd = ql_fopen(MQ_PARAM_FILE, "rb+");
     ql_fread(buff, sizeof(buff), 1, fd);
     config = cJSON_Parse(buff);
@@ -1352,7 +1488,7 @@ void factory_param_init()
         ql_fwrite((char*)factory_param, strlen(factory_param), 1, fd);
         ql_fclose(fd);
     }
-    char buff[2048];
+    char buff[2048] = {0};
     QFILE fd = ql_fopen(FACTORY_PARAM_FILE, "rb+");
     ql_fread(buff, sizeof(buff), 1, fd);
     factory_config = cJSON_Parse(buff);
@@ -1401,6 +1537,6 @@ void *mqtt_config_get()
 }
 
 void *factory_config_get()
-{
+{ 
     return factory_config;
 }

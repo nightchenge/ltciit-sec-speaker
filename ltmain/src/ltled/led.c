@@ -18,7 +18,7 @@
 #include "ql_power.h"
 #include "volume_knob.h"
 #include "ec800g_ota_master.h"
-
+#include "ltconf.h"
 #define QL_APP_LED_LOG_LEVEL QL_LOG_LEVEL_INFO
 #define QL_APP_LED_LOG(msg, ...) QL_LOG(QL_APP_LED_LOG_LEVEL, "QL_APP_LED", msg, ##__VA_ARGS__)
 #define QL_APP_LED_LOG_PUSH(msg, ...) QL_LOG_PUSH("QL_APP_LED", msg, ##__VA_ARGS__)
@@ -132,7 +132,9 @@ int VK16K33_init()
     ql_I2cWrite(LED_I2C, LED_SalveAddr, 0xa0, &buf2, 1);
     VK16K33_blink(1);
     // VK16K33_brightness(15);
-    VK16K33_brightness(brightness_level);
+    lt_vk16k33_set_brightness(mqtt_param_ledBrightness_get());
+    // brightness_level = mqtt_param_ledBrightness_get();
+    // VK16K33_brightness(brightness_level);
 
     return 0;
 }
@@ -421,27 +423,7 @@ void lt_led_show_rt_time(void)
     ql_get_vchg_vol(&vchg_vol);
     QL_APP_LED_LOG("vchg_vol  ==%d\n", vchg_vol);
 
-    //不进入低功耗的几个条件，设置的常量模式 或者接着电，处在升级模式，处于语音唤醒状态，处于OTA状态
-    if ((65535 == ltget_lp_ledbr()) || (lt_get_usb_charge_status() == TRUE)  || (TRUE == ltget_update_mode()) || (0 != lt_ltasr_wakeup()) || (TRUE == is_ota_mode()))
-    {
-        //  led_on();
-        if (timer_count > ltget_lp_ledbr())
-        {
-            // VK16K33_brightness(15);
-            VK16K33_brightness(brightness_level);
-        }
-        timer_count = 0;
-    }
 
-    if (timer_count == ltget_lp_ledbr())
-    {
-        // VK16K33_brightness(5);
-        VK16K33_brightness((uint8_t)(brightness_level/2));
-    }
-    else if (timer_count / 2 == ltget_lp_ledbr())
-    {
-        led_off();
-    }
 }
 
 // 功能二：FM广播 87.0 - 108.0
@@ -720,15 +702,33 @@ void ql_i2c_led_thread(void *param)
             }
             if (get_function_state() == RT_TIME)
             {
-                if (timer_count < LED_OFF_BR)
-                {
-                    timer_count++;
-                    QL_APP_LED_LOG("ql_i2c_led_thread");
+                // 不进入低功耗的几个条件，设置的常量模式 或者接着电，处在升级模式，处于语音唤醒状态，处于OTA状态
+
+                if (timer_count > ltget_lp_ledbr())
+                { 
+                    ql_rtos_task_sleep_ms(1000); // 低功耗模式
+                    continue;
                 }
                 else
                 {
-                    ql_rtos_task_sleep_ms(1000); // 低功耗模式
-                    continue;
+                    timer_count++;
+                    if (LED_BRTIME_MAX == ltget_lp_ledbr())
+                    {
+                        if (timer_count > ltget_lp_ledbr())
+                        {
+                            VK16K33_brightness(brightness_level);
+                        }
+                        timer_count = 0;
+                    }
+                    else if (timer_count == ltget_lp_ledbr() / 2)
+                    {
+                        VK16K33_brightness((uint8_t)(brightness_level / 2));
+                    }
+                    else if (timer_count == ltget_lp_ledbr())
+                    {
+                        led_off();
+                        continue;
+                    }
                 }
             }
             lt_led_show_function(get_function_state(), get_function_buf());
@@ -781,6 +781,9 @@ void lt_led_msg_thread(void *param)
             led_on();
             break;
         case 1: // led_off
+            break;
+        case 2: // led_brightness
+            lt_vk16k33_set_brightness(mqtt_param_ledBrightness_get());
             break;
         default:
             break;

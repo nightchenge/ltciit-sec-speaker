@@ -172,14 +172,12 @@ int usb_hotplug_cb(QL_USB_HOTPLUG_E state, void *ctx)
 {
 	if(state == QL_USB_HOTPLUG_OUT)
 	{
-     //   ltset_lp_ledbr(30);
 		QL_POWERDEMO_LOG("USB plug out");
 	}
 	else
 	{
         
         lt_exit_lp();//如果当前处于低功耗状态退出
-     //   ltset_lp_ledbr(32768);
 		QL_POWERDEMO_LOG("USB inserted");
 	}
 

@@ -3,8 +3,8 @@
  * @version:
  * @Author: zhouhao
  * @Date: 2025-10-29 15:17:10
- * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-11-20 21:07:15
+ * @LastEditors: ubuntu
+ * @LastEditTime: 2025-12-10 12:29:10
  */
 /*
 移植说明：
@@ -164,9 +164,6 @@ static void ota_recv_frame_timeout_cb(void *param)
     // 如果在OTA模式且收到了数据，则调用OTA处理函数
     if (g_uart_state.mode == UART_MODE_OTA && g_uart_state.ota_recv_idx > 0)
     {
-        // 调用 ec800g_ota_master.c 中的 ota_on_frame_received
-        // (该函数在 ec800g_ota_master.h 中声明)
-        extern void ota_on_frame_received(void);
         ota_on_frame_received();
     }
 }

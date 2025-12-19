@@ -32,6 +32,12 @@ typedef enum phone_type
     GAS_SERVICE_TYPE,           /* 燃气电话 */
 } phone_type_t;
 
+typedef enum led_mod_e
+{
+    LED_MODE_LOW_POWER   = 0,   /* 低功耗模式 */
+    LED_MODE_ALWAYS_ON   = 1,   /* 常亮模式 */
+    LED_MODE_SCREEN_OFF  = 2    /* 息屏模式 */
+} led_mode_t;
     /**
      * \brief 验证号码白名单授权状态
      * \return  白名单授权状态(NO_AUTH：未授权,AUTHED：已授权;
@@ -75,7 +81,13 @@ typedef enum phone_type
     int mqtt_param_whiteListName_set(char *p, int len);
 
     int mqtt_param_ledEnable_get();
-    int mqtt_param_ledEnable_set(int ledEnable);
+    int mqtt_param_ledEnable_set(led_mode_t ledEnable);
+
+    int mqtt_param_ledBrightness_get(void);
+    int mqtt_param_ledBrightness_set(int brightness);
+
+    int mqtt_param_ledScreenOnTime_get(void);
+    int mqtt_param_ledScreenOnTime_set(int time);
 
     int mqtt_param_whiteListState_get();
     int mqtt_param_whiteListState_set(int whiteListState);
@@ -87,6 +99,27 @@ typedef enum phone_type
 
     int mqtt_param_ebsinterval_get();
     int mqtt_param_ebsinterval_set(int ri);
+
+    
+    /**
+     * @brief 获取跌倒检测配置
+     * @param enable [out] 输出开关状态
+     * @param threshold [out] 输出阈值
+     * @param duration [out] 输出持续时间
+     * @return 0: 成功, -1: 失败
+     */
+    int mqtt_param_fallDetect_get(int *enable, int *threshold, int *duration);
+
+    /**
+     * @brief 设置跌倒检测配置 (保存为 "E,T,D" 格式字符串)
+     * @param enable 开关状态
+     * @param threshold 阈值
+     * @param duration 持续时间
+     * @return 0: 成功, -1: 失败
+     */
+    int mqtt_param_fallDetect_set(int enable, int threshold, int duration);
+
+
 
     void mqtt_param_init();
     void mqtt_param_reset();

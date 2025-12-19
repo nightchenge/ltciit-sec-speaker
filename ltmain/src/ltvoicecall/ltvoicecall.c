@@ -2,7 +2,7 @@
  * @Author: zhaixianwen
  * @Date: 2023-09-07 10:21:26
 
- * @LastEditTime: 2025-12-04 15:44:03
+ * @LastEditTime: 2025-12-10 09:47:06
  * @LastEditors: ubuntu
  * @Description: 电话处理模块
  * @FilePath: /LTE01R02A01_BETA0726_C_SDK_G/components/ql-application/ltmain/src/ltsms/ltsms.c
@@ -36,13 +36,14 @@
 #include "ltrecord.h"
 #include "ltsms_t.h"
 #include "lsm6ds3tr.h"
+#include "ql_api_nw.h"
 #define LT_VOICE_CALL_LOG_LEVEL QL_LOG_LEVEL_INFO
 #define LT_VOICE_CALL_LOG(msg, ...) QL_LOG(LT_VOICE_CALL_LOG_LEVEL, "ltvoicecall", msg, ##__VA_ARGS__)
 
 ql_codec_reg_t g_es8311CloseRegList[] = ES8311_CLOSE_CONFIG;
 
 /* === begin: family number list definitions === */
-#define FAMILY_LIST_NUM 5
+#define FAMILY_LIST_NUM 6
 typedef struct
 {
 	int id;
@@ -133,7 +134,8 @@ static lt_voice_call_t ltvoicecall = {
 	.status_onchanged = NULL,
 	.sos_next =  FALSE,
 };
-#include "ql_api_nw.h"
+
+static void lt_voice_call_answer();
 void lt_get_gnsss_t(CellInfo *cell)
 {
 		ql_nw_cell_info_s *cell_info = (ql_nw_cell_info_s *)calloc(1, sizeof(ql_nw_cell_info_s));
@@ -671,23 +673,7 @@ static void family_key_click_cb_new()
     }
     else if (st == STATUS_CALLED)
     {
-        /* 来电时接听逻辑保持不变 */
-        int n = 0;
-        while (0 != ql_voice_call_answer(ltvoicecall.nSim) && n < 20)
-        {
-            LT_VOICE_CALL_LOG("ql_voice_call_answer fail%d", n);
-            ql_rtos_task_sleep_ms(500);
-            n++;
-        }
-        api_yuanLiuMqtt_KeyPhone_Publish(0);
-        if (n == 10)
-        {
-            LT_VOICE_CALL_LOG("ql_voice_call_answer FAIL");
-        }
-        else
-        {
-            LT_VOICE_CALL_LOG("ql_voice_call_answer OK");
-        }
+		lt_voice_call_answer();
     }
     else
     {
@@ -751,22 +737,7 @@ static void family_key_click_cb()
 		}
 	}else if(st ==STATUS_CALLED)
 	{
-		int n = 0;
-		while (0 != ql_voice_call_answer(ltvoicecall.nSim) && n < 20)
-		{
-			LT_VOICE_CALL_LOG("ql_voice_call_answer fail%d", n);
-			ql_rtos_task_sleep_ms(500);
-			n++;
-		}
-		api_yuanLiuMqtt_KeyPhone_Publish(0);
-		if (n == 10)
-		{
-			LT_VOICE_CALL_LOG("ql_voice_call_answer FAIL");
-		}
-		else
-		{
-			LT_VOICE_CALL_LOG("ql_voice_call_answer OK");
-		}
+		lt_voice_call_answer();
 	}
 	else
 	{
@@ -848,10 +819,9 @@ static void lt_voice_call_answer()
 		ql_rtos_task_sleep_ms(500);
 		n++;
 	}
-	// ql_vc_errcode_e err = ql_voice_call_answer(ltvoicecall.nSim);
 	api_yuanLiuMqtt_KeyPhone_Publish(0);
 	//	if (err != QL_VC_SUCCESS)
-	if (n == 10)
+	if (n == 20)
 	{
 		LT_VOICE_CALL_LOG("ql_voice_call_answer FAIL");
 	}
@@ -1170,29 +1140,11 @@ void lt_voicecall_timer_callback(void *ctx)
 //定时任务，主要处理sos号码自动接听
 void lt_voicecall_called_callback(void *ctx)
 {
-	QlOSStatus err = QL_OSI_SUCCESS;
 	LT_VOICE_CALL_LOG("sos_number_auth_verif success!!");
 
 	if ((lt_voice_call_status_get() == STATUS_CALLED))
 	{
-		int n = 0;
-		while (0 != ql_voice_call_answer(ltvoicecall.nSim) && n < 20)
-		{
-			LT_VOICE_CALL_LOG("ql_voice_call_answer fail%d", n);
-			ql_rtos_task_sleep_ms(500);
-			n++;
-		}
-		LT_VOICE_CALL_LOG("ql_voice_call_answer success!!");
-		api_yuanLiuMqtt_KeyPhone_Publish(0);
-		LT_VOICE_CALL_LOG("api_yuanLiuMqtt_KeyPhone_Publish success!!");
-		if (err != QL_VC_SUCCESS)
-		{
-			LT_VOICE_CALL_LOG("ql_voice_call_answer FAIL");
-		}
-		else
-		{
-			LT_VOICE_CALL_LOG("ql_voice_call_answer OK");
-		}
+		lt_voice_call_answer();
 	}
 }
 

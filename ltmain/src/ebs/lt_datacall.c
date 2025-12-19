@@ -108,20 +108,20 @@ static int lt_data_call(ql_task_t *task)
     ebs_log("ret=0x%x, long_oper_name:%s, short_oper_name:%s, mcc:%s, mnc:%s",
             ret, oper_info.long_oper_name, oper_info.short_oper_name, oper_info.mcc, oper_info.mnc);
 
-// #if TYPE_FUNC == TYPE_QIXIA   
-    if(get_type_func() == TYPE_QIXIA)
+// #if TYPE_FUNC == TYPE_QIXIA
+    if (get_type_func() == TYPE_QIXIA)
     {
-   //栖霞定制 新增广电卡限制
-    if (strstr(oper_info.short_oper_name, "CBN") == NULL)
-    {
-        ebs_log("short_oper_name is not CBN!!");
-        ql_rtos_semaphore_delete(lt_data_reg_sem[sim_id]);
-        while (1)
+        // 栖霞定制 新增广电卡限制
+        if (strstr(oper_info.short_oper_name, "CBN") == NULL)
         {
-            ql_rtos_task_sleep_ms(2000);
+            ebs_log("short_oper_name is not CBN!!");
+            ql_rtos_semaphore_delete(lt_data_reg_sem[sim_id]);
+            while (1)
+            {
+                ql_rtos_task_sleep_ms(2000);
+            }
+            // return -1;
         }
-        // return -1;
-    }
     }
 // #endif
 

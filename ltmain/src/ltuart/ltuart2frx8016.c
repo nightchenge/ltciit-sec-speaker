@@ -26,7 +26,7 @@
 #include "ql_api_sim.h"
 #include "led.h"
 #include "ql_audio.h"
-//#include "audio_demo.h"
+// #include "audio_demo.h"
 #include "ltadc.h"
 #include "ltsystem.h"
 #include "ltplay.h"
@@ -47,20 +47,21 @@
 
 #define QL_USB_PRINTER_ENABLE 0
 
-extern  struct lt_uart_port_state_t {
+extern struct lt_uart_port_state_t
+{
     lt_uart_mode_e mode;
     ql_task_t normal_target_task_ref;
     uint32_t normal_msg_id;
     bool initialized;
     ql_uart_port_number_e port_num;
     volatile uint8_t ota_state;
-    ql_timer_t recv_timer_ref;       // OTA 帧接收超时定时器
-    ql_timer_t response_timer_ref;   // OTA 命令响应超时定时器
-    uint8_t* ota_recv_buffer;
+    ql_timer_t recv_timer_ref;     // OTA 帧接收超时定时器
+    ql_timer_t response_timer_ref; // OTA 命令响应超时定时器
+    uint8_t *ota_recv_buffer;
     uint16_t ota_recv_idx;
-    uint8_t* ota_send_buffer;
+    uint8_t *ota_send_buffer;
     int64_t ota_fw_handle;
-    char* ota_fw_path_copy;
+    char *ota_fw_path_copy;
     uint32_t ota_fw_total_len;
     uint32_t ota_base_address;
     uint32_t ota_dev_version;
@@ -68,8 +69,6 @@ extern  struct lt_uart_port_state_t {
     uint32_t ota_send_data_offset;
     uint16_t ota_timeout_count;
 } g_uart_state; // <-- 继承ota定义全局变量
-
-
 
 #define FACTORY_FARMAT "{\"tp\":\"%s\",\"sn\":\"%s\",\"hw\":\"%s\",\"sw\":\"%s\",\"deviceType\":%d}"
 #define SERVICE_FARMAT "{\"ser\":\"%s\",\"port\":%d,\"usr\":\"%s\",\"psd\":\"%s\",\"id\":\"%s\"}"
@@ -103,8 +102,7 @@ static void f_sn_dispose(cJSON *json);
 static void l_reboot_dispose(cJSON *json);
 static void l_reset_dispose(cJSON *json);
 static void l_battery_dispose(cJSON *json);
-//static void l_ota_start_dispose(cJSON *json);
-
+// static void l_ota_start_dispose(cJSON *json);
 
 void lt_ota_start_public()
 {
@@ -121,29 +119,25 @@ void lt_ota_start_public()
     }
 }
 
-//设备关闭唯一接口
+// 设备关闭唯一接口
 
-//发送给单片机执行关机动作
-void  lt_uart_reboot_now(int type)
+// 发送给单片机执行关机动作
+void lt_uart_reboot_now(int type)
 {
     ql_gpio_set_level(GPIO_35, LVL_LOW); // PA power
-    ql_gpio_set_level(GPIO_3, LVL_LOW); // CI1302 power
-       // 让1302启动起来后再打开功放电源,最好在locader中处理
-    ql_gpio_set_level(GPIO_1, LVL_LOW); // ES8311 power
-    ql_gpio_set_level(GPIO_0, LVL_LOW); // PA power
+    ql_gpio_set_level(GPIO_3, LVL_LOW);  // CI1302 power
+                                         // 让1302启动起来后再打开功放电源,最好在locader中处理
+    ql_gpio_set_level(GPIO_1, LVL_LOW);  // ES8311 power
+    ql_gpio_set_level(GPIO_0, LVL_LOW);  // PA power
     QL_UART_DEMO_LOG("lt_uart_reboot_now");
-    char buf[4]={0xa5,0xa5,0xff,0xff};
-    lt_uart2frx8016_send(buf,4);
+    char buf[4] = {0xa5, 0xa5, 0xff, 0xff};
+    lt_uart2frx8016_send(buf, 4);
 }
 
 void lt_shutdown()
 {
-    ltapi_play_tts_withcallback(TTS_STR_SYS_SHUTDOWN_SOON, strlen(TTS_STR_SYS_SHUTDOWN_SOON),QL_TTS_UTF8,NULL,lt_uart_reboot_now);
+    ltapi_play_tts_withcallback(TTS_STR_SYS_SHUTDOWN_SOON, strlen(TTS_STR_SYS_SHUTDOWN_SOON), QL_TTS_UTF8, NULL, lt_uart_reboot_now);
 }
-
-
-
-
 
 static lt_conf_msg_dispose_t m_dispose[] = {
     {"act", l_act_dispose}};
@@ -169,9 +163,8 @@ static lt_conf_msg_dispose_t npara_dispose[] = {
     {"reboot", l_reboot_dispose},
     {"reset", l_reset_dispose},
     {"battery", l_battery_dispose},
-//  {"ota_start", l_ota_start_dispose},
-    };// <--- 新增
-
+    //  {"ota_start", l_ota_start_dispose},
+}; // <--- 新增
 
 void f_deviceType_dispose(cJSON *json)
 {
@@ -253,7 +246,7 @@ void l_ebsServer_dispose(cJSON *json)
         if (ip4addr_aton(json->valuestring, &addr))
         {
             ebs_param.reg_ip[0] = HTONL(addr.addr);
-            ebs_param.reg_ip_4g[0] = HTONL(addr.addr);           
+            ebs_param.reg_ip_4g[0] = HTONL(addr.addr);
             comm_reg_ip_addr_set(ebs_param.reg_ip[0]);
             comm_reg_4g_addr_set(ebs_param.reg_ip[0]);
             ebs_param_save();
@@ -267,15 +260,15 @@ void l_ebsServerPort_dispose(cJSON *json)
     if (json != NULL)
     {
         ebs_param.reg_port[0] = json->valueint;
-        ebs_param.reg_port_4g[0] = json->valueint;       
+        ebs_param.reg_port_4g[0] = json->valueint;
         ebs_param_save();
         comm_reg_ip_port_set(ebs_param.reg_port[0]);
-        comm_reg_4g_port_set(ebs_param.reg_port[0]);      
+        comm_reg_4g_port_set(ebs_param.reg_port[0]);
         comm_reg_reconnection();
     }
 }
 
-void l_ebsLbk_dispose(cJSON *json) 
+void l_ebsLbk_dispose(cJSON *json)
 {
     ip4_addr_t addr;
     if (json != NULL)
@@ -284,15 +277,14 @@ void l_ebsLbk_dispose(cJSON *json)
         {
             ebs_param.lbk_ip[0] = HTONL(addr.addr);
             ebs_param.lbk_ip_4g[0] = HTONL(addr.addr);
-            ebs_param_save();            
+            ebs_param_save();
             comm_lbk_ip_addr_set(ebs_param.lbk_ip[0]);
             comm_lbk_4g_addr_set(ebs_param.lbk_ip[0]);
         }
     }
-
 }
 
-void l_ebsLbkPort_dispose(cJSON *json) 
+void l_ebsLbkPort_dispose(cJSON *json)
 {
     if (json != NULL)
     {
@@ -322,14 +314,13 @@ void l_reboot_dispose(cJSON *json)
     if (json != NULL)
     {
         if (json->valueint == 1)
-        {          
+        {
             ltapi_play_tts(TTS_STR_SYS_REBOOT_5S, strlen(TTS_STR_SYS_REBOOT_5S));
             ql_rtos_task_sleep_s(5);
             ql_power_reset(RESET_NORMAL);
             return;
         }
     }
-
 }
 
 void l_reset_dispose(cJSON *json)
@@ -360,7 +351,6 @@ void l_battery_dispose(cJSON *json)
         battery = temp < 0 ? 0 : (temp > 100 ? 100 : temp);
     }
 }
-
 
 /* * 启动 OTA 的 JSON 命令处理
  * 示例: {"act":"s", "npara":{"ota_start":"/data/firmware.bin"}}
@@ -414,16 +404,16 @@ void l_act_dispose(cJSON *root)
             char sn[32] = {0};
             factory_param_sn_get(sn, sizeof(sn));
             // #if TYPE_FUNC == TYPE_SICHUAN
-            if(get_type_func() == TYPE_SICHUAN)
+            if (get_type_func() == TYPE_SICHUAN)
             {
-          //  sprintf(json, FACTORY_FARMAT, "LTCIIT-HHT", sn,HARDWARE_VERSION ,SOFTWARE_VERSION, factory_param_deviceType_get());
-            sprintf(json, FACTORY_FARMAT, "ZR-ZHRHT", sn,HARDWARE_VERSION ,SOFTWARE_VERSION, factory_param_deviceType_get());
-            // #else
+                //  sprintf(json, FACTORY_FARMAT, "LTCIIT-HHT", sn,HARDWARE_VERSION ,SOFTWARE_VERSION, factory_param_deviceType_get());
+                sprintf(json, FACTORY_FARMAT, "ZR-ZHRHT", sn, HARDWARE_VERSION, SOFTWARE_VERSION, factory_param_deviceType_get());
+                // #else
             }
-            else 
+            else
             {
-            sprintf(json, FACTORY_FARMAT, "LTCIIT-HHT", sn,HARDWARE_VERSION ,SOFTWARE_VERSION, factory_param_deviceType_get());
-            // #endif
+                sprintf(json, FACTORY_FARMAT, "LTCIIT-HHT", sn, HARDWARE_VERSION, SOFTWARE_VERSION, factory_param_deviceType_get());
+                // #endif
             }
             lt_uart2frx8016_send(json, strlen(json));
         }
@@ -460,7 +450,7 @@ void l_act_dispose(cJSON *root)
             char area[25] = {0};
             mqtt_param_phone_get(familyPhone, sizeof(familyPhone), FAMILY_TYPE);
             mqtt_param_sosPhone_get(sosPhone, sizeof(sosPhone));
-            sprintf(area,"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+            sprintf(area, "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
                     ebs_param.resources_code[0], ebs_param.resources_code[1],
                     ebs_param.resources_code[2], ebs_param.resources_code[3],
                     ebs_param.resources_code[4], ebs_param.resources_code[5],
@@ -476,7 +466,7 @@ void l_act_dispose(cJSON *root)
         if (ble_version != NULL)
         {
             set_ble_version(ble_version->valuestring);
-            QL_UART_DEMO_LOG("Test1:ble_version=%s",ble_version->valuestring);
+            QL_UART_DEMO_LOG("Test1:ble_version=%s", ble_version->valuestring);
         }
     }
     else if (act != NULL && memcmp(act->valuestring, "s", 1) == 0)
@@ -640,7 +630,7 @@ static void lt_uart_notify_cb(unsigned int ind_type, ql_uart_port_number_e port,
     free(recv_buff);
     recv_buff = NULL;
 }
-//ASR功能列表
+// ASR功能列表
 
 #if 0
 static asr_type_state_t asr_type_state[]=
@@ -658,56 +648,85 @@ static asr_type_state_t asr_type_state[]=
 };
 
 #else
-static asr_type_state_t asr_type_state[]=
-{
-    {ASR_AUDIO, ASR_FM,         NULL,  NULL,  NULL,  },
- 	{ASR_AUDIO, ASR_MP3,        NULL,  NULL,  NULL,  },
-    {ASR_AUDIO, ASR_SMS,        NULL,  NULL,  NULL,  },
-    {ASR_CALL,  ASR_FAMILY,     NULL,  NULL,  NULL,  },
-    {ASR_CALL,  ASR_SOS,        NULL,  NULL,  NULL,  }
+static asr_type_state_t asr_type_state[] =
+    {
+        {
+            ASR_AUDIO,
+            ASR_FM,
+            NULL,
+            NULL,
+            NULL,
+        },
+        {
+            ASR_AUDIO,
+            ASR_MP3,
+            NULL,
+            NULL,
+            NULL,
+        },
+        {
+            ASR_AUDIO,
+            ASR_SMS,
+            NULL,
+            NULL,
+            NULL,
+        },
+        {
+            ASR_CALL,
+            ASR_FAMILY,
+            NULL,
+            NULL,
+            NULL,
+        },
+        {
+            ASR_CALL,
+            ASR_SOS,
+            NULL,
+            NULL,
+            NULL,
+        }
 
 };
 #endif
-//注册ASR回调函数
+// 注册ASR回调函数
 void ltasr_callback_register(asr_type_state_t *reg)
 {
-    uint16_t num=0;
+    uint16_t num = 0;
 
     for (num = 0; num < sizeof(asr_type_state) / sizeof(asr_type_state[0]); num++)
     {
-        if(reg->function == asr_type_state[num].function && reg->state == asr_type_state[num].state)
+        if (reg->function == asr_type_state[num].function && reg->state == asr_type_state[num].state)
         {
-            if(0 == lt_led_show_onoff())//如果按键的第一下屏幕是灭的话 直接先唤醒
+            if (0 == lt_led_show_onoff()) // 如果按键的第一下屏幕是灭的话 直接先唤醒
             {
-              //  led_on();
+                //  led_on();
             }
 
-            if(reg->start_function)
+            if (reg->start_function)
                 asr_type_state[num].start_function = reg->start_function;
-            if(reg->stop_function)
-                asr_type_state[num].stop_function  = reg->stop_function;
-            //if(reg->pause_function)
-                //asr_type_state[num].pause_function  = reg->pause_function;
-            if(reg->next_function)
-                asr_type_state[num].next_function  = reg->next_function;
-            if(reg->last_function)
-                asr_type_state[num].last_function  = reg->last_function;
-            break;                           
+            if (reg->stop_function)
+                asr_type_state[num].stop_function = reg->stop_function;
+            // if(reg->pause_function)
+            // asr_type_state[num].pause_function  = reg->pause_function;
+            if (reg->next_function)
+                asr_type_state[num].next_function = reg->next_function;
+            if (reg->last_function)
+                asr_type_state[num].last_function = reg->last_function;
+            break;
         }
     }
-
 }
 
-uint8_t asr_state=0;
+uint8_t asr_state = 0;
 uint8_t audio_flag = 0;
 
-//回调函数
+// 回调函数
 void test_asr_process(uint8_t function, uint8_t state)
 {
     uint8_t num;
     for (num = 0; num < sizeof(asr_type_state) / sizeof(asr_type_state[0]); num++)
     {
-        if(function == asr_type_state[num].function && state == asr_type_state[num].state)
+        if (function == asr_type_state[num].function && state == asr_type_state[num].state)
         {
             ql_rtos_task_sleep_ms(1000);
             if (audio_flag == ASR_START && asr_type_state[num].start_function)
@@ -718,33 +737,33 @@ void test_asr_process(uint8_t function, uint8_t state)
                 asr_type_state[num].next_function(NULL);
             else if (audio_flag == ASR_LAST && asr_type_state[num].last_function)
                 asr_type_state[num].last_function(NULL);
-            //else if (now_state ==0xff && asr_type_state[num].pause_function)
-                //asr_type_state[num].pause_function(NULL);
+            // else if (now_state ==0xff && asr_type_state[num].pause_function)
+            // asr_type_state[num].pause_function(NULL);
         }
-    }   
+    }
 }
 
-//ASR处理函数
-//ASR_SYSTEM
+// ASR处理函数
+// ASR_SYSTEM
 
 void asr_system_handle(uint8_t data)
 {
-    if(data==0x02)
+    if (data == 0x02)
     {
         ltapi_play_tts(TTS_STR_SYS_REBOOT_5S, strlen(TTS_STR_SYS_REBOOT_5S));
         ql_rtos_task_sleep_s(5);
         ql_power_reset(RESET_NORMAL);
-
-    }else if(data==0x00)
+    }
+    else if (data == 0x00)
     {
         lt_shutdown();
     }
 }
-//ASR_AUDIO
+// ASR_AUDIO
 void asr_audio_handle(uint8_t data)
 {
     uint8_t now_state = ltplay_get_src();
-    if(now_state == SND_FM_URL )
+    if (now_state == SND_FM_URL)
     {
         now_state = ASR_FM;
     }
@@ -752,45 +771,50 @@ void asr_audio_handle(uint8_t data)
     {
         now_state = ASR_MP3;
     }
-    switch(data)
+    switch (data)
     {
-        case 0x00:  asr_state = now_state;
-                    audio_flag = ASR_STOP; //停止播放
-                    break;
-        case 0x01:  asr_state = ASR_FM;
-                    audio_flag = ASR_START;
-                    break;
-        case 0x02:  asr_state = ASR_MP3;
-                    audio_flag = ASR_START;
-                    break;
-        case 0x03:  asr_state = ASR_SMS;
-                    audio_flag = ASR_START;
-                    break;
-        case 0x04:  if(ltplay_get_src() == SND_MP3 || ltplay_get_src() == SND_FM)
-                    {
-                        asr_state = now_state;
-                        audio_flag = ASR_LAST;
-                    }       //上一曲
-                    break;
-        case 0x05:  if(ltplay_get_src() == SND_MP3 || ltplay_get_src() == SND_FM)
-                    {
-                        asr_state = now_state;
-                        audio_flag = ASR_NEXT;
-                    }       //下一曲
+    case 0x00:
+        asr_state = now_state;
+        audio_flag = ASR_STOP; // 停止播放
+        break;
+    case 0x01:
+        asr_state = ASR_FM;
+        audio_flag = ASR_START;
+        break;
+    case 0x02:
+        asr_state = ASR_MP3;
+        audio_flag = ASR_START;
+        break;
+    case 0x03:
+        asr_state = ASR_SMS;
+        audio_flag = ASR_START;
+        break;
+    case 0x04:
+        if (ltplay_get_src() == SND_MP3 || ltplay_get_src() == SND_FM)
+        {
+            asr_state = now_state;
+            audio_flag = ASR_LAST;
+        } // 上一曲
+        break;
+    case 0x05:
+        if (ltplay_get_src() == SND_MP3 || ltplay_get_src() == SND_FM)
+        {
+            asr_state = now_state;
+            audio_flag = ASR_NEXT;
+        } // 下一曲
 
-                    break;
-        default:    
-                    break;
+        break;
+    default:
+        break;
     }
-
 }
-//ASR_CALL
+// ASR_CALL
 
 uint8_t now_state = 0;
 void asr_call_handle(uint8_t data)
 {
     uint8_t now_state = ltplay_get_src();
-    if(now_state == SND_FM_URL )
+    if (now_state == SND_FM_URL)
     {
         now_state = ASR_FM;
     }
@@ -834,7 +858,7 @@ void asr_call_handle(uint8_t data)
         break;
     }
 }
-//ASR_STATE
+// ASR_STATE
 
 static void asr_state_singal(void)
 {
@@ -873,16 +897,17 @@ static void asr_state_singal(void)
 #include "ltvoicecall.h"
 void asr_state_handle(uint8_t data)
 {
-    if(data==0x01)
+    if (data == 0x01)
     {
-        //char buf[]="当前电量百分之";
-        //char *buf2=(char *)battery;
-        //strcat(buf, buf2);
-        //ltapi_play_tts(buf, strlen(buf));
-    }else if(data==0x02)
+        // char buf[]="当前电量百分之";
+        // char *buf2=(char *)battery;
+        // strcat(buf, buf2);
+        // ltapi_play_tts(buf, strlen(buf));
+    }
+    else if (data == 0x02)
     {
-        //char *buf="今天天气状态.";
-        //ltapi_play_tts(buf, strlen(buf));
+        // char *buf="今天天气状态.";
+        // ltapi_play_tts(buf, strlen(buf));
         if (1 != lt_connect_status_get())
         {
             ltapi_play_tts(TTS_STR_NET_UNAVAILABLE, strlen(TTS_STR_NET_UNAVAILABLE));
@@ -892,13 +917,15 @@ void asr_state_handle(uint8_t data)
         {
             api_mqtt_weather_Publish();
         }
-    }else if(data==0x03)
+    }
+    else if (data == 0x03)
     {
         asr_state_singal();
-    }else if(data==0x04)
+    }
+    else if (data == 0x04)
     {
-        //char *buf="";
-        //ltapi_play_tts(buf, strlen(buf));
+        // char *buf="";
+        // ltapi_play_tts(buf, strlen(buf));
     }
 }
 
@@ -925,34 +952,32 @@ void asr_shutdown()
     if (ltasr_t.lt_asr_weakup == 1)
     {
         ltasr_t.lt_asr_weakup = 0;
-        
-    } 
+    }
 }
 void asr_ok()
 {
     if (ltasr_t.lt_asr_weakup == 1)
     {
         ltasr_t.lt_asr_weakup = 0;
-        
-    } 
+    }
 }
 
 int lt_ltasr_wakeup()
 {
-    return   ltasr_t.lt_asr_weakup;
+    return ltasr_t.lt_asr_weakup;
 }
 void test_asr_handle(uint8_t asr_function, uint8_t data)
-{  
-    //音量处理
-    // if(asr_function ==0xff && data ==0xff)  //退出唤醒
-    // {
-    //     // lt_audio_pa_disable_pw();
-    //     //lt_adc_set_volume_instantly();
-    // }
-    // else
-    // {
-    //     ql_set_volume(3);
-    // }
+{
+    // 音量处理
+    //  if(asr_function ==0xff && data ==0xff)  //退出唤醒
+    //  {
+    //      // lt_audio_pa_disable_pw();
+    //      //lt_adc_set_volume_instantly();
+    //  }
+    //  else
+    //  {
+    //      ql_set_volume(3);
+    //  }
 
     switch (asr_function)
     {
@@ -960,7 +985,7 @@ void test_asr_handle(uint8_t asr_function, uint8_t data)
         asr_wakeup();
         break;
     case ASR_SHUTDOWN:
-        asr_shutdown();                                                                                                                                    
+        asr_shutdown();
         break;
     case ASR_SYSTEM:
         asr_ok();
@@ -981,12 +1006,12 @@ void test_asr_handle(uint8_t asr_function, uint8_t data)
     default:
         break;
     }
-    if((audio_flag == ASR_NEXT || audio_flag == ASR_LAST) &&(asr_function == ASR_CALL)) 
+    if ((audio_flag == ASR_NEXT || audio_flag == ASR_LAST) && (asr_function == ASR_CALL))
     {
         asr_function = ASR_AUDIO;
     }
-    QL_UART_DEMO_LOG("Test1:asr_function=%02x asr_state=%02x",asr_function,asr_state);
-    test_asr_process(asr_function, asr_state);   
+    QL_UART_DEMO_LOG("Test1:asr_function=%02x asr_state=%02x", asr_function, asr_state);
+    test_asr_process(asr_function, asr_state);
 }
 
 char asr_version[10];
@@ -1013,7 +1038,6 @@ char *get_ble_version()
 
 static void lt_uart2frx8016_thread(void *param)
 {
-    int write_len = 0;
     while (1)
     {
         lt_conf_msg_t msg;
@@ -1025,54 +1049,47 @@ static void lt_uart2frx8016_thread(void *param)
         case MSG_RECV:
             if (msg.data != NULL)
             {
-                /*处理收到的json数据*/
-                //QL_UART_DEMO_LOG("read_len=%d, recv_data=%s", msg.datalen, msg.data);
-                #if 1
-                if(msg.data[0]==0x49)
+                /*处理OTA数据*/
+                if (msg.data[0] == 0x49)
                 {
-                    for(int i=0; i<msg.datalen; i++)
-                    {
-                        QL_UART_DEMO_LOG("Test1:recv_data[%d]=%02x",i,msg.data[i] );
-                    }
-                    //QL_UART_DEMO_LOG("Test1:recv_data[5]=%02x recv_data[8]=%02x",msg.data[5],msg.data[8] );
-                    if(msg.data[1] == 0xaa)
+                    if (msg.data[1] == 0xaa)
                     {
                         // 获取语音版本号
                         char asr_version_temp[10];
-                        memcpy(asr_version_temp, msg.data+2, msg.datalen -2);
-                        asr_version_temp[msg.datalen -2] = '\0';
-                        QL_UART_DEMO_LOG("Test1:asr_version_temp=%s",asr_version_temp );
+                        memcpy(asr_version_temp, msg.data + 2, msg.datalen - 2);
+                        asr_version_temp[msg.datalen - 2] = '\0';
                         set_asr_version(asr_version_temp);
-                        
                     }
-                    else 
+                    else
                     {
-                        test_asr_handle(msg.data[5],msg.data[8]);
+                        test_asr_handle(msg.data[5], msg.data[8]);
                     }
                 }
-              
-                #endif
-                cJSON *root = cJSON_Parse((const char *)msg.data);
-
-                if (root != NULL)
+                else /*处理收到的json数据*/
                 {
-                    for (int i = 0; i < sizeof(m_dispose) / sizeof(m_dispose[0]); i++)
+                    cJSON *root = cJSON_Parse((const char *)msg.data);
+
+                    if (root != NULL)
                     {
-                        cJSON *temp = cJSON_GetObjectItem(root, m_dispose[i].flag);
-                        if (temp != NULL)
+                        for (int i = 0; i < sizeof(m_dispose) / sizeof(m_dispose[0]); i++)
                         {
-                            m_dispose[i].funcDispose(root);
-                            break;
+                            cJSON *temp = cJSON_GetObjectItem(root, m_dispose[i].flag);
+                            if (temp != NULL)
+                            {
+                                m_dispose[i].funcDispose(root);
+                                break;
+                            }
                         }
+                        cJSON_Delete(root);
                     }
-                    cJSON_Delete(root);
                 }
             }
             break;
 
         case MSG_SEND:
-            write_len = ql_uart_write(QL_CUR_UART_PORT, msg.data, msg.datalen);
-            QL_UART_DEMO_LOG("write_len:%d data:%s", write_len, msg.data);
+            ql_uart_write(QL_CUR_UART_PORT, msg.data, msg.datalen);
+            break;
+
         default:
             break;
         }
@@ -1105,13 +1122,13 @@ void lt_uart2frx8016_send(char *data, int data_len)
 
 static void lt_uart_lpup_cb()
 {
-    char buf[4]={0xa4,0xa4,0x01,0x00};
-    lt_uart2frx8016_send(buf,4);
+    char buf[4] = {0xa4, 0xa4, 0x01, 0x00};
+    lt_uart2frx8016_send(buf, 4);
 }
 static void lt_uart_lpdown_cb()
 {
-    char buf[4]={0xa4,0xa4,0x01,0x01};
-    lt_uart2frx8016_send(buf,4);
+    char buf[4] = {0xa4, 0xa4, 0x01, 0x01};
+    lt_uart2frx8016_send(buf, 4);
 }
 
 static void lt_lp_uart_callback_register()
@@ -1123,14 +1140,13 @@ static void lt_lp_uart_callback_register()
     lt_lp_callback_register(&reg);
 }
 
-
 void lt_uart2frx8016_init(void)
 {
     int ret = 0;
     QlOSStatus err = 0;
     ql_task_t uart_task = NULL;
 
-    lt_uart_ota_init();//初始化单片机ota 
+    lt_uart_ota_init(); // 初始化单片机ota
 
     ql_uart_config_s uart_cfg = {0};
 
@@ -1182,7 +1198,7 @@ void lt_uart2frx8016_init(void)
             return;
         }
     }
-    //注册串口 low_power回调
+    // 注册串口 low_power回调
     lt_lp_uart_callback_register();
 
     return;

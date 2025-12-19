@@ -3,8 +3,8 @@
  * @version: 
  * @Author: zhouhao
  * @Date: 2025-10-29 15:10:31
- * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-11-20 21:32:23
+ * @LastEditors: ubuntu
+ * @LastEditTime: 2025-12-10 12:29:19
  */
 #ifndef EC800G_OTA_MASTER_H
 #define EC800G_OTA_MASTER_H
@@ -113,6 +113,7 @@ void ec_ota_stop(uint8_t status);
 // 取得 OTA 当前状态（0 空闲，其他为进度/状态码）
 uint8_t ec_ota_get_state(void);
 
+void ota_on_frame_received(void);
 
 void lt_uart_ota_init(void);
 
